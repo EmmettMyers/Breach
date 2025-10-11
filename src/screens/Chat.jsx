@@ -21,13 +21,69 @@ const Chat = () => {
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const messagesEndRef = useRef(null);
+  const transferStatusTimeoutRef = useRef(null);
+
+  // Function to set transfer status with auto-dismiss
+  const setTransferStatusWithTimeout = (status) => {
+    setTransferStatus(status);
+    
+    // Clear existing timeout
+    if (transferStatusTimeoutRef.current) {
+      clearTimeout(transferStatusTimeoutRef.current);
+    }
+    
+    // Set new timeout to fade out and clear status after 3 seconds
+    transferStatusTimeoutRef.current = setTimeout(() => {
+      // Add fade-out class for smooth transition
+      const statusElement = document.querySelector('.transfer-status');
+      if (statusElement) {
+        statusElement.classList.add('fade-out');
+        // Remove element after fade animation completes
+        setTimeout(() => {
+          setTransferStatus(null);
+        }, 150); // Match the CSS transition duration
+      } else {
+        setTransferStatus(null);
+      }
+    }, 3000);
+  };
 
   // SBC AppKit hooks
   const { account, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
       console.log('SBC transfer successful:', result);
-      setTransferStatus({ type: 'success', hash: result.transactionHash });
+      setTransferStatusWithTimeout({ type: 'success', hash: result.transactionHash });
+      
+      // Generate AI response after successful payment
+      const generateAIResponse = async () => {
+        try {
+          // Simulate AI response generation
+          const aiResponse = {
+            id: Date.now() + 1,
+            type: 'ai',
+            content: `Thank you for your payment! I received your message: "${currentMessage}". Here's my response as ${model.title}: I understand you're trying to test my capabilities. I'm designed to be helpful, harmless, and honest. How can I assist you today?`,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, aiResponse]);
+        } catch (error) {
+          console.error('Failed to generate AI response:', error);
+          // Add a fallback response
+          const fallbackResponse = {
+            id: Date.now() + 1,
+            type: 'ai',
+            content: `Thank you for your payment! I received your message: "${currentMessage}". I'm ${model.title} and I'm here to help you.`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, fallbackResponse]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      generateAIResponse();
+      
       // Refresh SBC balance after successful transfer
       if (account?.address) {
         const refreshBalance = async () => {
@@ -48,8 +104,18 @@ const Chat = () => {
     },
     onError: (error) => {
       console.error('SBC transfer failed:', error);
-      setTransferStatus({ type: 'error', message: error.message });
+      setTransferStatusWithTimeout({ type: 'error', message: error.message });
       setIsLoading(false);
+      
+      // Remove the user's message when payment is declined
+      setMessages(prev => {
+        // Find the last user message and remove it
+        const lastUserMessageIndex = prev.findLastIndex(msg => msg.type === 'user');
+        if (lastUserMessageIndex !== -1) {
+          return prev.filter((_, index) => index !== lastUserMessageIndex);
+        }
+        return prev;
+      });
     }
   });
 
@@ -104,6 +170,15 @@ const Chat = () => {
     fetchSbcBalance();
   }, [account?.address]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (transferStatusTimeoutRef.current) {
+        clearTimeout(transferStatusTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Format SBC balance
   const formatSbcBalance = (balance) => {
     if (!balance) return '0.00';
@@ -138,7 +213,7 @@ const Chat = () => {
     // Automatically send SBC tokens from smart account to the specified wallet
     if (account) {
       try {
-        setTransferStatus({ type: 'processing', message: 'Processing SBC payment from smart account...' });
+        setTransferStatusWithTimeout({ type: 'processing', message: 'Processing SBC payment from smart account...' });
         
         await sendSBCTransfer({
           account,
@@ -148,7 +223,7 @@ const Chat = () => {
         });
       } catch (error) {
         console.error('Failed to send SBC transfer:', error);
-        setTransferStatus({ type: 'error', message: `SBC transfer failed: ${error.message}` });
+        setTransferStatusWithTimeout({ type: 'error', message: `SBC transfer failed: ${error.message}` });
         setIsLoading(false);
         return;
       }
@@ -243,26 +318,27 @@ const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
 
+        {transferStatus && (
+          <div className={`transfer-status ${transferStatus.type}`}>
+            {transferStatus.type === 'processing' && (
+              <div>
+                {transferStatus.message}
+              </div>
+            )}
+            {transferStatus.type === 'success' && (
+              <div>
+                SBC payment successful! Hash: {transferStatus.hash?.slice(0, 10)}...
+              </div>
+            )}
+            {transferStatus.type === 'error' && (
+              <div>
+                SBC payment failed: {transferStatus.message}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="input-container">
-          {transferStatus && (
-            <div className={`transfer-status ${transferStatus.type}`}>
-              {transferStatus.type === 'processing' && (
-                <div>
-                  {transferStatus.message}
-                </div>
-              )}
-              {transferStatus.type === 'success' && (
-                <div>
-                  SBC payment successful! Hash: {transferStatus.hash?.slice(0, 10)}...
-                </div>
-              )}
-              {transferStatus.type === 'error' && (
-                <div>
-                  SBC payment failed: {transferStatus.message}
-                </div>
-              )}
-            </div>
-          )}
           <div className="input-wrapper">
             <textarea
               value={inputMessage}
