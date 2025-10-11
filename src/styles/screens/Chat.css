@@ -436,3 +436,9 @@
     width: 100%;
   }
 }
+
+.insufficient-balance-warning {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}

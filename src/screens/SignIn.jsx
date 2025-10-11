@@ -215,6 +215,96 @@ function WalletConnectFlow() {
 }
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const { account, ownerAddress, isLoadingAccount, isRefreshing, forceUpdate, setForceUpdate, walletBalance, isLoadingWalletBalance, fetchWalletBalance, refreshAccount } = useWalletState();
+  const { disconnectWallet } = useSbcApp();
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  // Force re-render when connection state changes
+  useEffect(() => {
+    if (ownerAddress && account) {
+      setIsConnecting(false);
+      setForceUpdate(prev => prev + 1);
+      // Optional: Auto-redirect after successful connection
+      // navigate('/');
+    }
+  }, [ownerAddress, account, navigate]);
+
+  // Force update when wallet connection changes
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [ownerAddress]);
+
+  // Refresh account data when component mounts or connection changes
+  useEffect(() => {
+    if (ownerAddress) {
+      // Wait a bit for the smart account to be initialized
+      const timeout = setTimeout(() => {
+        refreshAccount();
+      }, 1000); // 1 second delay
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [ownerAddress, refreshAccount]);
+
+  // Poll for account data if wallet is connected but no account data yet
+  useEffect(() => {
+    if (ownerAddress && !account && !isLoadingAccount) {
+      let pollCount = 0;
+      const maxPolls = 10; // Poll for maximum 20 seconds (10 * 2 seconds)
+      
+      const interval = setInterval(() => {
+        pollCount++;
+        refreshAccount();
+        
+        // Stop polling after max attempts
+        if (pollCount >= maxPolls) {
+          clearInterval(interval);
+        }
+      }, 2000); // Poll every 2 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [ownerAddress, account, isLoadingAccount, refreshAccount]);
+
+  // Reset connecting state after a timeout
+  useEffect(() => {
+    if (isConnecting) {
+      const timeout = setTimeout(() => {
+        setIsConnecting(false);
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isConnecting]);
+
+  const handleDisconnect = () => {
+    disconnectWallet();
+    setShowWalletSelector(false);
+    setIsConnecting(false);
+  };
+
+  const handleWalletConnect = useCallback(() => {
+    setIsConnecting(true);
+    setShowWalletSelector(false);
+    // Force a refresh after a short delay
+    setTimeout(() => {
+      refreshAccount();
+      setForceUpdate(prev => prev + 1);
+    }, 2000);
+  }, [refreshAccount]);
+
+  const handleWalletSelectorConnect = useCallback(() => {
+    setIsConnecting(true);
+    setShowWalletSelector(false);
+    // Force a refresh after a short delay
+    setTimeout(() => {
+      refreshAccount();
+      setForceUpdate(prev => prev + 1);
+    }, 2000);
+  }, [refreshAccount]);
+
   return (
     <div className="signin-screen">
       <main className="signin-main">
