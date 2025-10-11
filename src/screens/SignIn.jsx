@@ -1,36 +1,36 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WalletButton, useSbcApp } from '@stablecoin.xyz/react';
-import { base } from 'viem/chains';
-import { createPublicClient, http } from 'viem';
 import { erc20Abi } from 'viem';
+import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import BalanceTransfer from '../components/BalanceTransfer';
 import '../styles/screens/SignIn.css';
-
-// Chain configuration
-const chain = base;
-
-// SBC Token configuration
-const SBC_TOKEN_ADDRESS = (chain) => {
-  if (chain.id === base.id) {
-    return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
-  }
-  throw new Error('Unsupported chain');
-};
-
-const SBC_DECIMALS = (chain) => {
-  if (chain.id === base.id) {
-    return 18;
-  }
-  throw new Error('Unsupported chain');
-};
-
-const publicClient = createPublicClient({ chain, transport: http() });
 
 function WalletStatus({ onDisconnect }) {
   const { ownerAddress } = useSbcApp();
 
-  if (!ownerAddress) return null;
+  if (!ownerAddress) {
+    return (
+      <div className="wallet-status-card">
+        <div className="status-header">
+          <h3>Wallet Connected</h3>
+          <div className="skeleton skeleton-button" style={{width: '100px', height: '2rem'}}></div>
+        </div>
+        <div className="info-row">
+          <label>EOA Address:</label>
+          <div className="skeleton skeleton-text long"></div>
+        </div>
+        <div className="info-row">
+          <label>Connection:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+        <div className="info-row">
+          <label>Chain:</label>
+          <div className="skeleton skeleton-text short"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="wallet-status-card">
@@ -76,20 +76,23 @@ function SmartAccountInfo() {
         setSbcBalance(balance.toString());
       } catch (error) {
         console.error('Failed to fetch SBC balance for smart account:', error);
+        // Set to 0 on error to prevent retry loops
         setSbcBalance('0');
       } finally {
         setIsLoadingBalance(false);
       }
     };
 
-    fetchSbcBalance();
+    // Add a small delay to prevent immediate calls after account creation
+    const timeout = setTimeout(fetchSbcBalance, 500);
+    return () => clearTimeout(timeout);
   }, [account?.address]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refreshAccount?.();
-      // Refresh SBC balance as well
+      // Only refresh SBC balance if we have a valid account address
       if (account?.address) {
         setIsLoadingBalance(true);
         try {
@@ -102,6 +105,7 @@ function SmartAccountInfo() {
           setSbcBalance(balance.toString());
         } catch (error) {
           console.error('Failed to refresh SBC balance:', error);
+          // Don't set to 0 on error, keep previous value
         } finally {
           setIsLoadingBalance(false);
         }
@@ -113,14 +117,6 @@ function SmartAccountInfo() {
     }
   };
 
-  const formatEthBalance = (balance) => {
-    if (!balance) return '0.0000';
-    try {
-      return (Number(balance) / 1e18).toFixed(4);
-    } catch {
-      return '0.0000';
-    }
-  };
 
   const formatSbcBalance = (balance) => {
     if (!balance) return '0.00';
@@ -131,8 +127,50 @@ function SmartAccountInfo() {
     }
   };
 
-  if (!isInitialized || !account) {
-    return null;
+  if (!isInitialized) {
+    return (
+      <div className="smart-account-card">
+        <div className="status-header">
+          <h3>Smart Account</h3>
+          <div className="skeleton skeleton-button" style={{width: '80px', height: '2rem'}}></div>
+        </div>
+        <div className="info-row">
+          <label>Address:</label>
+          <div className="skeleton skeleton-text long"></div>
+        </div>
+        <div className="info-row">
+          <label>Deployed:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+        <div className="info-row">
+          <label>SBC Balance:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!account) {
+    return (
+      <div className="smart-account-card">
+        <div className="status-header">
+          <h3>Smart Account</h3>
+          <div className="skeleton skeleton-button" style={{width: '80px', height: '2rem'}}></div>
+        </div>
+        <div className="info-row">
+          <label>Address:</label>
+          <div className="skeleton skeleton-text long"></div>
+        </div>
+        <div className="info-row">
+          <label>Deployed:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+        <div className="info-row">
+          <label>SBC Balance:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -158,16 +196,12 @@ function SmartAccountInfo() {
       <div className="info-row">
         <label>SBC Balance:</label>
         <div className="value">
-          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
+          {isLoadingBalance ? (
+            <div className="skeleton skeleton-text medium"></div>
+          ) : (
+            `${formatSbcBalance(sbcBalance)} SBC`
+          )}
         </div>
-      </div>
-      <div className="info-row">
-        <label>Nonce:</label>
-        <div className="value">{account.nonce}</div>
-      </div>
-      <div className="info-row">
-        <label>ETH Balance:</label>
-        <div className="value">{formatEthBalance(account.balance)} ETH</div>
       </div>
     </div>
   );
@@ -179,6 +213,7 @@ function WalletConnectFlow() {
 
   useEffect(() => {
     if (ownerAddress && !prevOwnerAddress.current) {
+      // Only refresh once when wallet first connects
       refreshAccount();
     }
     prevOwnerAddress.current = ownerAddress;
@@ -210,9 +245,13 @@ function WalletConnectFlow() {
 
   return (
     <div className="connected-content">
-      <WalletStatus onDisconnect={disconnectWallet} />
-      <SmartAccountInfo />
-      <BalanceTransfer />
+      <div className="left-column">
+        <WalletStatus onDisconnect={disconnectWallet} />
+        <SmartAccountInfo />
+      </div>
+      <div className="right-column">
+        <BalanceTransfer />
+      </div>
     </div>
   );
 }
@@ -245,10 +284,11 @@ const SignIn = () => {
   }, [ownerAddress, refreshAccount]);
 
   // Poll for account data if wallet is connected but no account data yet
+  // Reduced polling frequency and max attempts to prevent rate limiting
   useEffect(() => {
     if (ownerAddress && !account && !isLoadingAccount) {
       let pollCount = 0;
-      const maxPolls = 10; // Poll for maximum 20 seconds (10 * 2 seconds)
+      const maxPolls = 5; // Reduced from 10 to 5 attempts
       
       const interval = setInterval(() => {
         pollCount++;
@@ -258,7 +298,7 @@ const SignIn = () => {
         if (pollCount >= maxPolls) {
           clearInterval(interval);
         }
-      }, 2000); // Poll every 2 seconds
+      }, 5000); // Increased from 2 seconds to 5 seconds to reduce API calls
       
       return () => clearInterval(interval);
     }
@@ -287,7 +327,6 @@ const SignIn = () => {
     // Force a refresh after a short delay
     setTimeout(() => {
       refreshAccount();
-      setForceUpdate(prev => prev + 1);
     }, 2000);
   }, [refreshAccount]);
 
@@ -297,7 +336,6 @@ const SignIn = () => {
     // Force a refresh after a short delay
     setTimeout(() => {
       refreshAccount();
-      setForceUpdate(prev => prev + 1);
     }, 2000);
   }, [refreshAccount]);
 

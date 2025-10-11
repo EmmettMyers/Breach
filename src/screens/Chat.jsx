@@ -196,7 +196,7 @@ const Chat = () => {
       const transferResult = await sendUserOperation({
         to: sbcTokenAddress,
         data: transferData,
-        value: '0', // No native ETH value for ERC-20 transfers
+        value: '0', // No native token value for ERC-20 transfers
       });
 
       console.log('Transfer initiated:', transferResult);

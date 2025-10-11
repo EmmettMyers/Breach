@@ -14,7 +14,7 @@ const sbcConfig = {
   apiKey: import.meta.env.VITE_SBC_API_KEY || 'your-sbc-api-key-here',
   chain: base,
   wallet: 'auto', // Automatically detect available wallets
-  debug: true,
+  //debug: true,
 };
 
 function App() {

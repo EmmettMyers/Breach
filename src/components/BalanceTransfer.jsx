@@ -1,27 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
-import { createPublicClient, http, getAddress, parseSignature, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
-import { base } from 'viem/chains';
-
-// Chain configuration
-const chain = base;
-
-// SBC Token configuration
-const SBC_TOKEN_ADDRESS = (chain) => {
-  if (chain.id === base.id) {
-    return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
-  }
-  throw new Error('Unsupported chain');
-};
-
-const SBC_DECIMALS = (chain) => {
-  if (chain.id === base.id) {
-    return 18;
-  }
-  throw new Error('Unsupported chain');
-};
-
-const publicClient = createPublicClient({ chain, transport: http() });
+import { getAddress, parseSignature, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
+import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 
 // ERC-20 Permit ABI
 const erc20PermitAbi = [
@@ -346,19 +326,52 @@ function BalanceTransfer() {
   const isFormValid = amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(formatSbcBalance(walletBalance || '0'));
 
   if (!account || !ownerAddress) {
-    return null;
+    return (
+      <div className="balance-transfer-card">
+        <div className="status-header">
+          <h3>Transfer SBC to Smart Account</h3>
+        </div>
+        
+        <div className="info-row">
+          <label>Wallet Balance:</label>
+          <div className="skeleton skeleton-text medium"></div>
+        </div>
+        
+        <div className="form-group">
+          <label>Amount to Transfer</label>
+          <div className="skeleton skeleton-input"></div>
+        </div>
+        
+        <div className="status-section">
+          <div className="info-row">
+            <label>From:</label>
+            <div className="skeleton skeleton-text medium"></div>
+          </div>
+          <div className="info-row">
+            <label>To:</label>
+            <div className="skeleton skeleton-text medium"></div>
+          </div>
+          <div className="info-row">
+            <label>Gas fees:</label>
+            <div className="skeleton skeleton-text medium"></div>
+          </div>
+        </div>
+
+        <div className="skeleton skeleton-button"></div>
+      </div>
+    );
   }
 
   return (
     <div className="balance-transfer-card">
       <div className="status-header">
-        <h3>💸 Transfer SBC to Smart Account</h3>
+        <h3>Transfer SBC to Smart Account</h3>
       </div>
       
       {isWrongNetwork && (
         <div className="network-warning">
           <div className="warning-content">
-            <p>⚠️ Wrong Network Detected</p>
+            <p>Wrong Network Detected</p>
             <p>Please switch to Base network to continue</p>
             <button onClick={switchToBaseNetwork} className="switch-network-btn">
               Switch to Base Network
@@ -370,7 +383,11 @@ function BalanceTransfer() {
       <div className="info-row">
         <label>Wallet Balance:</label>
         <div className="value">
-          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(walletBalance)} SBC`}
+          {isLoadingBalance ? (
+            <div className="skeleton skeleton-text medium"></div>
+          ) : (
+            `${formatSbcBalance(walletBalance)} SBC`
+          )}
         </div>
       </div>
       
@@ -404,7 +421,7 @@ function BalanceTransfer() {
         </div>
         <div className="info-row">
           <label>Gas fees:</label>
-          <div className="value">Covered by SBC Paymaster ✨</div>
+          <div className="value">Covered by SBC Paymaster</div>
         </div>
       </div>
 
@@ -420,7 +437,7 @@ function BalanceTransfer() {
         <div className={`status-message ${transferStatus.type}`}>
           {transferStatus.type === 'success' && (
             <div>
-              <p>✅ Transfer Successful!</p>
+              <p>Transfer Successful!</p>
               <a 
                 href={`https://basescan.org/tx/${transferStatus.hash}`}
                 target="_blank"
@@ -434,14 +451,14 @@ function BalanceTransfer() {
           
           {transferStatus.type === 'error' && (
             <div>
-              <p>❌ Transfer Failed</p>
+              <p>Transfer Failed</p>
               <p>{transferStatus.message}</p>
             </div>
           )}
           
           {transferStatus.type === 'pending' && (
             <div>
-              <p>⏳ {transferStatus.message}</p>
+              <p>{transferStatus.message}</p>
             </div>
           )}
         </div>
