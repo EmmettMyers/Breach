@@ -1,8 +1,218 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { WalletButton, WalletSelector, useSbcApp } from '@stablecoin.xyz/react';
-import { useNavigate } from 'react-router-dom';
-import { useWalletState } from '../hooks/useWalletState';
+import React, { useState, useEffect, useRef } from 'react';
+import { WalletButton, useSbcApp } from '@stablecoin.xyz/react';
+import { base } from 'viem/chains';
+import { createPublicClient, http } from 'viem';
+import { erc20Abi } from 'viem';
 import '../styles/screens/SignIn.css';
+
+// Chain configuration
+const chain = base;
+
+// SBC Token configuration
+const SBC_TOKEN_ADDRESS = (chain) => {
+  if (chain.id === base.id) {
+    return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+  }
+  throw new Error('Unsupported chain');
+};
+
+const SBC_DECIMALS = (chain) => {
+  if (chain.id === base.id) {
+    return 18;
+  }
+  throw new Error('Unsupported chain');
+};
+
+const publicClient = createPublicClient({ chain, transport: http() });
+
+function WalletStatus({ onDisconnect }) {
+  const { ownerAddress } = useSbcApp();
+
+  if (!ownerAddress) return null;
+
+  return (
+    <div className="wallet-status-card">
+      <div className="status-header">
+        <h3>Wallet Connected</h3>
+        <button onClick={onDisconnect} className="disconnect-btn">Disconnect</button>
+      </div>
+      <div className="info-row">
+        <label>EOA Address:</label>
+        <div className="address-display">{ownerAddress}</div>
+      </div>
+      <div className="info-row">
+        <label>Connection:</label>
+        <div className="value">Connected via wallet extension</div>
+      </div>
+      <div className="info-row">
+        <label>Chain:</label>
+        <div className="value">{chain.name}</div>
+      </div>
+    </div>
+  );
+}
+
+function SmartAccountInfo() {
+  const { account, isInitialized, refreshAccount, isLoadingAccount } = useSbcApp();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sbcBalance, setSbcBalance] = useState(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+
+  // Fetch SBC balance for smart account
+  useEffect(() => {
+    if (!account?.address) return;
+
+    const fetchSbcBalance = async () => {
+      setIsLoadingBalance(true);
+      try {
+        const balance = await publicClient.readContract({
+          address: SBC_TOKEN_ADDRESS(chain),
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address],
+        });
+        setSbcBalance(balance.toString());
+      } catch (error) {
+        console.error('Failed to fetch SBC balance for smart account:', error);
+        setSbcBalance('0');
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchSbcBalance();
+  }, [account?.address]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAccount?.();
+      // Refresh SBC balance as well
+      if (account?.address) {
+        setIsLoadingBalance(true);
+        try {
+          const balance = await publicClient.readContract({
+            address: SBC_TOKEN_ADDRESS(chain),
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [account.address],
+          });
+          setSbcBalance(balance.toString());
+        } catch (error) {
+          console.error('Failed to refresh SBC balance:', error);
+        } finally {
+          setIsLoadingBalance(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh account:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const formatEthBalance = (balance) => {
+    if (!balance) return '0.0000';
+    try {
+      return (Number(balance) / 1e18).toFixed(4);
+    } catch {
+      return '0.0000';
+    }
+  };
+
+  const formatSbcBalance = (balance) => {
+    if (!balance) return '0.00';
+    try {
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
+    } catch {
+      return '0.00';
+    }
+  };
+
+  if (!isInitialized || !account) {
+    return null;
+  }
+
+  return (
+    <div className="smart-account-card">
+      <div className="status-header">
+        <h3>Smart Account</h3>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || isLoadingAccount}
+          className="refresh-btn"
+        >
+          {isRefreshing || isLoadingAccount ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
+      <div className="info-row">
+        <label>Address:</label>
+        <div className="address-display">{account.address}</div>
+      </div>
+      <div className="info-row">
+        <label>Deployed:</label>
+        <div className="value">{account.isDeployed ? 'Yes' : 'On first transaction'}</div>
+      </div>
+      <div className="info-row">
+        <label>SBC Balance:</label>
+        <div className="value">
+          {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
+        </div>
+      </div>
+      <div className="info-row">
+        <label>Nonce:</label>
+        <div className="value">{account.nonce}</div>
+      </div>
+      <div className="info-row">
+        <label>ETH Balance:</label>
+        <div className="value">{formatEthBalance(account.balance)} ETH</div>
+      </div>
+    </div>
+  );
+}
+
+function WalletConnectFlow() {
+  const { ownerAddress, disconnectWallet, refreshAccount } = useSbcApp();
+  const prevOwnerAddress = useRef(null);
+
+  useEffect(() => {
+    if (ownerAddress && !prevOwnerAddress.current) {
+      refreshAccount();
+    }
+    prevOwnerAddress.current = ownerAddress;
+  }, [ownerAddress, refreshAccount]);
+
+  if (!ownerAddress) {
+    return (
+      <div className="connect-prompt">
+        <h3>Connect Your Wallet</h3>
+        <p>Connect your wallet to create a smart account with gasless transactions</p>
+        <div className="wallet-button-container">
+          <WalletButton
+            walletType="auto"
+            onConnect={refreshAccount}
+            render={({ onClick, isConnecting }) => (
+              <button
+                className="wallet-connect-btn"
+                onClick={onClick}
+                disabled={isConnecting}
+              >
+                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+              </button>
+            )}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="connected-content">
+      <WalletStatus onDisconnect={disconnectWallet} />
+      <SmartAccountInfo />
+    </div>
+  );
+}
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -96,152 +306,10 @@ const SignIn = () => {
   }, [refreshAccount]);
 
   return (
-    <div className="signin-screen" key={`signin-${forceUpdate}`}>
-      <div className="signin-container">
-        <div className="signin-header">
-          <h1>Connect Your Wallet</h1>
-          <p>Sign in with your wallet to start chatting with AI models and making stablecoin payments</p>
-        </div>
-
-        {!ownerAddress && !isConnecting ? (
-          <div className="wallet-connection">
-            {!showWalletSelector ? (
-              <div className="connection-options">
-                <div className="connection-info">
-                  <h3>Why connect your wallet?</h3>
-                  <ul>
-                    <li>Secure authentication with your crypto wallet</li>
-                    <li>Make gasless stablecoin payments for AI interactions</li>
-                    <li>Access to premium AI models and features</li>
-                    <li>Track your usage and spending history</li>
-                  </ul>
-                </div>
-                
-                <div className="connection-buttons">
-                  <WalletButton 
-                    className="primary-connect-btn"
-                    onConnect={handleWalletConnect}
-                  >
-                    Connect Wallet
-                  </WalletButton>
-                  
-                  <button 
-                    className="secondary-btn"
-                    onClick={() => setShowWalletSelector(true)}
-                  >
-                    Choose Wallet Type
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="wallet-selector-container">
-                <div className="selector-header">
-                  <h3>Select Your Wallet</h3>
-                  <button 
-                    className="back-btn"
-                    onClick={() => setShowWalletSelector(false)}
-                  >
-                    ← Back
-                  </button>
-                </div>
-                <WalletSelector
-                  key={`wallet-selector-${Date.now()}`}
-                  onConnect={handleWalletSelectorConnect}
-                  showOnlyAvailable={true}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="connected-wallet">
-            <div className="connection-success">
-              <div className="success-content">
-                <div className="success-icon">✓</div>
-                <div className="success-text">
-                  <h3>Wallet Connected Successfully!</h3>
-                  <p>You're now ready to start chatting with AI models</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="wallet-details">
-              <div className="detail-item">
-                <span className="label">Wallet Address:</span>
-                <span className="value">{ownerAddress}</span>
-              </div>
-              
-              {account && (
-                <>
-                  <div className="detail-item">
-                    <span className="label">Smart Account:</span>
-                    <span className="value">{account.address}</span>
-                  </div>
-                  
-                  <div className="detail-item">
-                    <span className="label">Wallet Balance:</span>
-                    <span className="value">
-                      {isLoadingWalletBalance ? 'Loading...' : 
-                        walletBalance ? `${parseFloat(walletBalance.formatted).toFixed(4)} ${walletBalance.symbol}` : 
-                        '0 SBC'}
-                    </span>
-                  </div>
-                  
-                  <div className="detail-item">
-                    <span className="label">Account Status:</span>
-                    <span className="value">
-                      {account.isDeployed ? 'Deployed' : 'Not Deployed (will deploy on first transaction)'}
-                    </span>
-                  </div>
-                  
-                  <div className="detail-item">
-                    <span className="label">Smart Account Balance:</span>
-                    <span className="value">
-                      {account.balance ? (parseInt(account.balance) / 1e18).toFixed(4) : '0'} SBC
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="action-buttons">
-              <button 
-                className="disconnect-btn"
-                onClick={handleDisconnect}
-              >
-                Disconnect Wallet
-              </button>
-            </div>
-          </div>
-        )}
-
-        {(isLoadingAccount || isConnecting || isRefreshing) && (
-          <div className="loading-state">
-            <div className="skeleton-box">
-              <div className="skeleton-line skeleton-title"></div>
-              <div className="skeleton-line skeleton-text"></div>
-              <div className="skeleton-line skeleton-text"></div>
-              <div className="skeleton-line skeleton-text-short"></div>
-            </div>
-            <p className="loading-text">
-              {isConnecting ? 'Connecting wallet...' : 
-               isRefreshing ? 'Refreshing account data...' : 
-               'Loading account information...'}
-            </p>
-          </div>
-        )}
-
-        {ownerAddress && !account && !isLoadingAccount && !isRefreshing && (
-          <div className="polling-state">
-            <div className="skeleton-box">
-              <div className="skeleton-line skeleton-title"></div>
-              <div className="skeleton-line skeleton-text"></div>
-              <div className="skeleton-line skeleton-text-short"></div>
-            </div>
-            <p className="loading-text">Setting up your smart account...</p>
-            <small>This may take a few moments</small>
-          </div>
-        )}
-      </div>
+    <div className="signin-screen">
+      <main className="signin-main">
+        <WalletConnectFlow />
+      </main>
     </div>
   );
 };

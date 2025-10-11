@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useUserOperation, WalletButton } from '@stablecoin.xyz/react';
-import { parseUnits, encodeFunctionData } from 'viem';
-import { useWalletState } from '../hooks/useWalletState';
+import { useSbcApp, useUserOperation, WalletButton } from '@stablecoin.xyz/react';
+import { parseUnits, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
+import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import '../styles/screens/Chat.css';
+
+// SBC Token configuration
+const chain = base;
+const SBC_TOKEN_ADDRESS = '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+const SBC_DECIMALS = 18;
+const publicClient = createPublicClient({ chain, transport: http() });
 
 const Chat = () => {
   const { modelId } = useParams();
@@ -15,6 +22,8 @@ const Chat = () => {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [transferStatus, setTransferStatus] = useState(null);
+  const [sbcBalance, setSbcBalance] = useState(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const messagesEndRef = useRef(null);
 
   // SBC AppKit hooks
@@ -23,20 +32,23 @@ const Chat = () => {
     onSuccess: (result) => {
       console.log('Stablecoin transfer successful:', result);
       setTransferStatus({ type: 'success', hash: result.transactionHash });
-      // Refresh balance after successful transfer
-      fetchWalletBalance();
-      
-      // Show AI response after successful transfer
-      setTimeout(() => {
-        const aiResponse = {
-          id: Date.now() + 1,
-          type: 'ai',
-          content: `I understand you're asking about "${currentMessage}". As ${model.title}, I'm here to help with ${model.description.toLowerCase()}. Could you provide more specific details about what you'd like assistance with?`,
-          timestamp: new Date()
+      // Refresh SBC balance after successful transfer
+      if (account?.address) {
+        const refreshBalance = async () => {
+          try {
+            const balance = await publicClient.readContract({
+              address: SBC_TOKEN_ADDRESS,
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [account.address],
+            });
+            setSbcBalance(balance.toString());
+          } catch (error) {
+            console.error('Failed to refresh SBC balance:', error);
+          }
         };
-        setMessages(prev => [...prev, aiResponse]);
-        setIsLoading(false);
-      }, 1000);
+        refreshBalance();
+      }
     },
     onError: (error) => {
       console.error('Stablecoin transfer failed:', error);
@@ -70,6 +82,41 @@ const Chat = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Fetch SBC balance for smart account
+  useEffect(() => {
+    if (!account?.address) return;
+
+    const fetchSbcBalance = async () => {
+      setIsLoadingBalance(true);
+      try {
+        const balance = await publicClient.readContract({
+          address: SBC_TOKEN_ADDRESS,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address],
+        });
+        setSbcBalance(balance.toString());
+      } catch (error) {
+        console.error('Failed to fetch SBC balance for smart account:', error);
+        setSbcBalance('0');
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchSbcBalance();
+  }, [account?.address]);
+
+  // Format SBC balance
+  const formatSbcBalance = (balance) => {
+    if (!balance) return '0.00';
+    try {
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS)).toFixed(2);
+    } catch {
+      return '0.00';
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading || isTransferLoading) return;
@@ -300,14 +347,7 @@ const Chat = () => {
             Cost: 0.01 SBC per prompt
             {ownerAddress && (
               <span className="account-balance">
-                • Balance: {isLoadingWalletBalance ? 'Loading...' : 
-                            walletBalance ? `${parseFloat(walletBalance.formatted).toFixed(4)} ${walletBalance.symbol}` : 
-                            '0 SBC'}
-                {walletBalance && parseFloat(walletBalance.formatted) < 0.01 && (
-                  <span className="insufficient-balance-warning">
-                    {' '}(Insufficient balance - get SBC tokens from SBC Dashboard)
-                  </span>
-                )}
+                &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
               </span>
             )}
           </div>
