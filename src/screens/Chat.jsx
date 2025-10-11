@@ -219,7 +219,7 @@ const Chat = () => {
           account,
           sendUserOperation,
           recipientAddress: '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
-          amount: '0.01' // Send 0.01 SBC per message
+          amount: model.promptCost.toString() // Send promptCost SBC per message
         });
       } catch (error) {
         console.error('Failed to send SBC transfer:', error);
@@ -351,15 +351,15 @@ const Chat = () => {
             />
             <button
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < 0.01)}
+              disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost)}
               className="send-button"
             >
               {isTransferLoading ? 'Processing...' : isLoading ? 'Sending...' : 
-                (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < 0.01) ? 'Insufficient Balance' : 'Send'}
+                (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost) ? 'Insufficient Balance' : 'Send'}
             </button>
           </div>
           <div className="cost-info">
-            Cost: 0.01 SBC per prompt
+            Cost: {model.promptCost} SBC per prompt
             {account && (
               <span className="account-balance">
                 &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}

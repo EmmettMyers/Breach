@@ -7,7 +7,7 @@ export async function sendSBCTransfer({
   account,
   sendUserOperation,
   recipientAddress = '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0', // Default recipient
-  amount = '0.01' // Default amount in SBC
+  amount // Amount in SBC - must be provided
 }) {
   if (!account) {
     throw new Error('Missing smart account for SBC transfer');

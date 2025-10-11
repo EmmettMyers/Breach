@@ -6,7 +6,7 @@ export const aiModels = [
     description: "Automotive customer service AI trained on GPT-4 for handling vehicle inquiries, warranty claims, and technical support.",
     creator: "AutoCorp Solutions",
     aiModel: "GPT-4",
-    promptCost: 0.03,
+    promptCost: 0.01,
     prize: 150,
     attempts: 15
   },
