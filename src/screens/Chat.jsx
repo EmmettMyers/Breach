@@ -132,7 +132,7 @@ const Chat = () => {
     // Reset textarea height
     const textarea = document.querySelector('.message-input');
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = '44px'; // Reset to minimum height (accounting for padding)
     }
 
     // Automatically send SBC tokens from smart account to the specified wallet
@@ -164,11 +164,24 @@ const Chat = () => {
 
   const handleInputChange = (e) => {
     setInputMessage(e.target.value);
-    
-    // Auto-resize textarea
     const textarea = e.target;
+    
+    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    
+    // Get the computed line height
+    const computedStyle = window.getComputedStyle(textarea);
+    const lineHeight = parseFloat(computedStyle.lineHeight) || 20;
+    const maxLines = 8;
+    const padding = 24; // 12px top + 12px bottom padding
+    const maxHeight = (lineHeight * maxLines) + padding;
+    
+    // Get the scroll height (content height)
+    const scrollHeight = textarea.scrollHeight;
+    
+    // Set height to the minimum of scrollHeight and maxHeight
+    const newHeight = Math.min(scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
   };
 
   if (!model) {
