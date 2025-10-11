@@ -4,6 +4,7 @@ import { WalletButton, useSbcApp } from '@stablecoin.xyz/react';
 import { base } from 'viem/chains';
 import { createPublicClient, http } from 'viem';
 import { erc20Abi } from 'viem';
+import BalanceTransfer from '../components/BalanceTransfer';
 import '../styles/screens/SignIn.css';
 
 // Chain configuration
@@ -211,6 +212,7 @@ function WalletConnectFlow() {
     <div className="connected-content">
       <WalletStatus onDisconnect={disconnectWallet} />
       <SmartAccountInfo />
+      <BalanceTransfer />
     </div>
   );
 }
