@@ -63,3 +63,47 @@
   background-color: var(--color-nav-active);
   color: var(--color-nav-text);
 }
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wallet-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.wallet-address {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.balance-info {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-weight: 500;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}

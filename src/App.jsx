@@ -11,11 +11,15 @@ import SignIn from './screens/SignIn';
 
 // SBC AppKit configuration
 const sbcConfig = {
-  apiKey: import.meta.env.VITE_SBC_API_KEY || 'your-sbc-api-key-here',
+  apiKey: import.meta.env.VITE_SBC_API_KEY || '',
   chain: baseSepolia,
   wallet: 'auto', // Automatically detect available wallets
   debug: true,
   walletOptions: { autoConnect: false },
+  // Ensure paymaster is enabled for gasless transactions
+  paymaster: {
+    enabled: true,
+  },
 };
 
 function App() {
