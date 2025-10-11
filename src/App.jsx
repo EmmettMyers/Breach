@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SbcProvider } from '@stablecoin.xyz/react';
-import { baseSepolia } from 'viem/chains';
+import { base } from 'viem/chains';
 import Navigation from './components/Navigation';
 import Explore from './screens/Explore';
 import Chat from './screens/Chat';
@@ -12,10 +12,9 @@ import SignIn from './screens/SignIn';
 // SBC AppKit configuration
 const sbcConfig = {
   apiKey: import.meta.env.VITE_SBC_API_KEY || 'your-sbc-api-key-here',
-  chain: baseSepolia,
+  chain: base,
   wallet: 'auto', // Automatically detect available wallets
   debug: true,
-  walletOptions: { autoConnect: false },
 };
 
 function App() {

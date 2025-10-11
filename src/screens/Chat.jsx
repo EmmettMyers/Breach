@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSbcApp, useUserOperation, WalletButton } from '@stablecoin.xyz/react';
-import { parseUnits } from 'viem';
+import { parseUnits, createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
+import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import '../styles/screens/Chat.css';
+
+// SBC Token configuration
+const chain = base;
+const SBC_TOKEN_ADDRESS = '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+const SBC_DECIMALS = 18;
+const publicClient = createPublicClient({ chain, transport: http() });
 
 const Chat = () => {
   const { modelId } = useParams();
@@ -13,6 +21,8 @@ const Chat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [transferStatus, setTransferStatus] = useState(null);
+  const [sbcBalance, setSbcBalance] = useState(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const messagesEndRef = useRef(null);
 
   // SBC AppKit hooks
@@ -21,6 +31,23 @@ const Chat = () => {
     onSuccess: (result) => {
       console.log('Stablecoin transfer successful:', result);
       setTransferStatus({ type: 'success', hash: result.transactionHash });
+      // Refresh SBC balance after successful transfer
+      if (account?.address) {
+        const refreshBalance = async () => {
+          try {
+            const balance = await publicClient.readContract({
+              address: SBC_TOKEN_ADDRESS,
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [account.address],
+            });
+            setSbcBalance(balance.toString());
+          } catch (error) {
+            console.error('Failed to refresh SBC balance:', error);
+          }
+        };
+        refreshBalance();
+      }
     },
     onError: (error) => {
       console.error('Stablecoin transfer failed:', error);
@@ -52,6 +79,41 @@ const Chat = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Fetch SBC balance for smart account
+  useEffect(() => {
+    if (!account?.address) return;
+
+    const fetchSbcBalance = async () => {
+      setIsLoadingBalance(true);
+      try {
+        const balance = await publicClient.readContract({
+          address: SBC_TOKEN_ADDRESS,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address],
+        });
+        setSbcBalance(balance.toString());
+      } catch (error) {
+        console.error('Failed to fetch SBC balance for smart account:', error);
+        setSbcBalance('0');
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchSbcBalance();
+  }, [account?.address]);
+
+  // Format SBC balance
+  const formatSbcBalance = (balance) => {
+    if (!balance) return '0.00';
+    try {
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS)).toFixed(2);
+    } catch {
+      return '0.00';
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading || isTransferLoading) return;
@@ -246,7 +308,7 @@ const Chat = () => {
             Cost: {model.promptCost} SBC per prompt
             {ownerAddress && account && (
               <span className="account-balance">
-                • Balance: {account.balance ? (parseInt(account.balance) / 1e18).toFixed(4) : '0'} SBC
+                &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
               </span>
             )}
           </div>
