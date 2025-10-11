@@ -1,0 +1,221 @@
+.explore-screen {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 108px);
+}
+
+.search-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  backdrop-filter: none;
+  width: 100%;
+}
+
+.search-input {
+  flex: 3;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.filter-select {
+  flex: 1;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 48px;
+  box-sizing: border-box;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  padding-right: 2rem;
+  appearance: none;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+}
+
+.filter-select option {
+  background: var(--color-button-background);
+  color: var(--color-text-primary);
+}
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  justify-items: center;
+}
+
+.model-card {
+  background: var(--color-button-background);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.model-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+}
+
+.model-header {
+  margin-bottom: 0.75rem;
+}
+
+.model-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.jailbreak-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.jailbreak-badges .attempts {
+  background: rgba(100, 108, 255, 0.2);
+  color: #a8b0ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.jailbreak-badges .prize {
+  background: #0a8637;
+  color: rgb(230, 255, 222);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.jailbreak-badges .prompt-cost {
+  background: rgba(10, 134, 55, 0.2);
+  color: #7dd87d;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.model-description {
+  color: var(--color-text-primary);
+  opacity: 0.8;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.model-creator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.creator-name {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.ai-model {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .explore-screen {
+    padding: 1rem;
+  }
+  
+  .search-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .search-input,
+  .filter-select {
+    flex: none;
+    width: 100%;
+  }
+  
+  .models-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .jailbreak-badges {
+    flex-wrap: wrap;
+  }
+  
+  .explore-header h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .model-card {
+    padding: 1rem;
+  }
+  
+  .model-title {
+    font-size: 1.1rem;
+  }
+  
+  .model-description {
+    font-size: 0.9rem;
+  }
+}
