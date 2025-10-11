@@ -19,8 +19,8 @@ export const useWalletState = () => {
 
     setIsLoadingWalletBalance(true);
     try {
-      // SBC token contract address on Base Sepolia
-      const sbcTokenAddress = '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
+      // SBC token contract address - use centralized configuration
+      const sbcTokenAddress = '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
       
       console.log('Fetching balance for account:', account.address);
       console.log('SBC token address:', sbcTokenAddress);

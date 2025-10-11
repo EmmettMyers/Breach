@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSbcApp, useUserOperation, WalletButton } from '@stablecoin.xyz/react';
-import { parseUnits, createPublicClient, http } from 'viem';
+import { parseUnits, createPublicClient, http, encodeFunctionData } from 'viem';
 import { base } from 'viem/chains';
 import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
+import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
+import { sendSBCTransfer } from '../utils/sbcTransfer';
 import '../styles/screens/Chat.css';
-
-// SBC Token configuration
-const chain = base;
-const SBC_TOKEN_ADDRESS = '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
-const SBC_DECIMALS = 18;
-const publicClient = createPublicClient({ chain, transport: http() });
 
 const Chat = () => {
   const { modelId } = useParams();
@@ -30,14 +26,14 @@ const Chat = () => {
   const { account, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
-      console.log('Stablecoin transfer successful:', result);
+      console.log('SBC transfer successful:', result);
       setTransferStatus({ type: 'success', hash: result.transactionHash });
       // Refresh SBC balance after successful transfer
       if (account?.address) {
         const refreshBalance = async () => {
           try {
             const balance = await publicClient.readContract({
-              address: SBC_TOKEN_ADDRESS,
+              address: SBC_TOKEN_ADDRESS(chain),
               abi: erc20Abi,
               functionName: 'balanceOf',
               args: [account.address],
@@ -51,7 +47,7 @@ const Chat = () => {
       }
     },
     onError: (error) => {
-      console.error('Stablecoin transfer failed:', error);
+      console.error('SBC transfer failed:', error);
       setTransferStatus({ type: 'error', message: error.message });
       setIsLoading(false);
     }
@@ -91,7 +87,7 @@ const Chat = () => {
       setIsLoadingBalance(true);
       try {
         const balance = await publicClient.readContract({
-          address: SBC_TOKEN_ADDRESS,
+          address: SBC_TOKEN_ADDRESS(chain),
           abi: erc20Abi,
           functionName: 'balanceOf',
           args: [account.address],
@@ -112,28 +108,14 @@ const Chat = () => {
   const formatSbcBalance = (balance) => {
     if (!balance) return '0.00';
     try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS)).toFixed(2);
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
     } catch {
       return '0.00';
     }
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || isTransferLoading) return;
-
-    // Check if smart account is available
-    if (!account) {
-      alert('Smart account not available. Please ensure your wallet is connected.');
-      return;
-    }
-
-    // Fixed cost of 0.01 SBC (one cent) for all prompts
-    const promptCost = 0.01;
-    // Check SBC balance
-    if (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < promptCost) {
-      alert(`Insufficient SBC balance. You need ${promptCost} SBC but only have ${formatSbcBalance(sbcBalance)} SBC. Please get SBC tokens from the SBC Dashboard or faucet.`);
-      return;
-    }
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -146,7 +128,6 @@ const Chat = () => {
     setCurrentMessage(inputMessage); // Store the current message for the AI response
     setInputMessage('');
     setIsLoading(true);
-    setTransferStatus(null);
     
     // Reset textarea height
     const textarea = document.querySelector('.message-input');
@@ -154,60 +135,23 @@ const Chat = () => {
       textarea.style.height = 'auto';
     }
 
-    try {
-      // Send stablecoin transfer for the prompt cost (fixed at 0.01 SBC)
-      const promptCost = 0.01; // Fixed cost of 0.01 SBC (one cent)
-      const costInWei = parseUnits(promptCost.toString(), 18);
-      
-      // Fixed recipient address for payments
-      const recipientAddress = '0x0943091Cd1804A562F8Bd6F99c230BCc3A08b87d';
-      
-      // SBC is an ERC-20 token, so we need to use the transfer function
-      // SBC token contract address on Base Sepolia (from SBC documentation)
-      const sbcTokenAddress = '0xf9FB20B8E097904f0aB7d12e9DbeE88f2dcd0F16';
-      
-      // Encode the ERC-20 transfer function call
-      const transferData = encodeFunctionData({
-        abi: [{
-          "inputs": [
-            {"internalType": "address", "name": "to", "type": "address"},
-            {"internalType": "uint256", "name": "amount", "type": "uint256"}
-          ],
-          "name": "transfer",
-          "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }],
-        functionName: 'transfer',
-        args: [recipientAddress, costInWei]
-      });
-      
-      // Debug information
-      console.log('Transfer details:', {
-        recipientAddress,
-        sbcTokenAddress,
-        costInWei: costInWei.toString(),
-        promptCost,
-        sbcBalance: formatSbcBalance(sbcBalance),
-        accountAddress: account?.address
-      });
-
-      // Send the ERC-20 transfer through the smart account
-      const transferResult = await sendUserOperation({
-        to: sbcTokenAddress,
-        data: transferData,
-        value: '0', // No native token value for ERC-20 transfers
-      });
-
-      console.log('Transfer initiated:', transferResult);
-      
-      // The transfer is now in progress, the onSuccess/onError callbacks will handle the result
-      // We'll show the AI response after the transfer completes successfully
-      
-    } catch (error) {
-      console.error('Failed to initiate stablecoin transfer:', error);
-      setTransferStatus({ type: 'error', message: `Transfer failed: ${error.message || 'Unknown error'}` });
-      setIsLoading(false);
+    // Automatically send SBC tokens from smart account to the specified wallet
+    if (account) {
+      try {
+        setTransferStatus({ type: 'processing', message: 'Processing SBC payment from smart account...' });
+        
+        await sendSBCTransfer({
+          account,
+          sendUserOperation,
+          recipientAddress: '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
+          amount: '0.01' // Send 0.01 SBC per message
+        });
+      } catch (error) {
+        console.error('Failed to send SBC transfer:', error);
+        setTransferStatus({ type: 'error', message: `SBC transfer failed: ${error.message}` });
+        setIsLoading(false);
+        return;
+      }
     }
   };
 
@@ -245,7 +189,7 @@ const Chat = () => {
           <h1 className="model-title">{model.title}</h1>
           <div className="model-meta">
             <span className="creator">{model.creator}</span>
-            <span className="ai-model">• {model.aiModel}</span>
+            <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
           </div>
         </div>
         <div className="model-stats">
@@ -289,14 +233,19 @@ const Chat = () => {
         <div className="input-container">
           {transferStatus && (
             <div className={`transfer-status ${transferStatus.type}`}>
+              {transferStatus.type === 'processing' && (
+                <div>
+                  {transferStatus.message}
+                </div>
+              )}
               {transferStatus.type === 'success' && (
                 <div>
-                  ✅ Transfer successful! Hash: {transferStatus.hash?.slice(0, 10)}...
+                  SBC payment successful! Hash: {transferStatus.hash?.slice(0, 10)}...
                 </div>
               )}
               {transferStatus.type === 'error' && (
                 <div>
-                  ❌ Transfer failed: {transferStatus.message}
+                  SBC payment failed: {transferStatus.message}
                 </div>
               )}
             </div>
@@ -306,7 +255,7 @@ const Chat = () => {
               value={inputMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder={`Ask ${model.title} anything...`}
+              placeholder={`Try to jailbreak ${model.title} using prompts...`}
               className="message-input"
               rows="1"
               disabled={isLoading || isTransferLoading || !account}

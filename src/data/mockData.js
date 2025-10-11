@@ -109,5 +109,35 @@ export const aiModels = [
     promptCost: 0.035,
     prize: 130,
     attempts: 13
+  },
+  {
+    id: 12,
+    title: "AgriGrow Assistant",
+    description: "Agricultural AI model built on GPT-4 for crop monitoring, pest detection, and yield optimization recommendations.",
+    creator: "AgriTech Solutions",
+    aiModel: "GPT-4",
+    promptCost: 0.03,
+    prize: 200,
+    attempts: 20
+  },
+  {
+    id: 13,
+    title: "RealEstate Analyzer",
+    description: "Property investment AI powered by Claude 3 for market analysis, property valuation, and investment opportunity assessment.",
+    creator: "PropTech Dynamics",
+    aiModel: "Claude 3",
+    promptCost: 0.025,
+    prize: 160,
+    attempts: 16
+  },
+  {
+    id: 14,
+    title: "CyberGuard Security",
+    description: "Cybersecurity AI model based on Gemini Pro for threat detection, vulnerability assessment, and security incident response.",
+    creator: "SecureTech Systems",
+    aiModel: "Gemini Pro",
+    promptCost: 0.02,
+    prize: 250,
+    attempts: 25
   }
 ];

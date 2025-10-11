@@ -74,10 +74,24 @@ function SmartAccountInfo() {
           args: [account.address],
         });
         setSbcBalance(balance.toString());
+        // Dispatch custom event to notify Navigation component of balance update
+        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
+          detail: { 
+            balance: balance.toString(),
+            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2)
+          } 
+        }));
       } catch (error) {
         console.error('Failed to fetch SBC balance for smart account:', error);
         // Set to 0 on error to prevent retry loops
         setSbcBalance('0');
+        // Dispatch event even on error to update navigation
+        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
+          detail: { 
+            balance: '0',
+            formattedBalance: '0.00'
+          } 
+        }));
       } finally {
         setIsLoadingBalance(false);
       }
@@ -103,6 +117,13 @@ function SmartAccountInfo() {
             args: [account.address],
           });
           setSbcBalance(balance.toString());
+          // Dispatch custom event to notify Navigation component of balance update
+          window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
+            detail: { 
+              balance: balance.toString(),
+              formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2)
+            } 
+          }));
         } catch (error) {
           console.error('Failed to refresh SBC balance:', error);
           // Don't set to 0 on error, keep previous value
@@ -215,6 +236,10 @@ function WalletConnectFlow() {
     if (ownerAddress && !prevOwnerAddress.current) {
       // Only refresh once when wallet first connects
       refreshAccount();
+      // Dispatch custom event to notify Navigation component
+      window.dispatchEvent(new CustomEvent('walletConnected', { 
+        detail: { ownerAddress } 
+      }));
     }
     prevOwnerAddress.current = ownerAddress;
   }, [ownerAddress, refreshAccount]);
@@ -316,9 +341,23 @@ const SignIn = () => {
   }, [isConnecting]);
 
   const handleDisconnect = () => {
+    console.log('Disconnect button clicked, dispatching events...');
+    // Set global state immediately
+    window.walletDisconnected = true;
     disconnectWallet();
     setShowWalletSelector(false);
     setIsConnecting(false);
+    // Dispatch custom event to notify Navigation component
+    window.dispatchEvent(new CustomEvent('walletDisconnected'));
+    
+    // Dispatch multiple events to ensure Navigation gets it
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('walletDisconnected'));
+    }, 50);
+    
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('walletDisconnected'));
+    }, 100);
   };
 
   const handleWalletConnect = useCallback(() => {

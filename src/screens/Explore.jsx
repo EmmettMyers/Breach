@@ -21,7 +21,7 @@ const ModelCard = ({ model, onModelClick }) => {
       
       <div className="model-creator">
         <span className="creator-name">{model.creator}</span>
-        <span className="ai-model">• {model.aiModel}</span>
+        <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
       </div>
     </div>
   );
@@ -29,7 +29,7 @@ const ModelCard = ({ model, onModelClick }) => {
 
 const Explore = () => {
   const navigate = useNavigate();
-  const { account } = useSbcApp();
+  const { account, ownerAddress, isLoadingAccount } = useSbcApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedPrizeRange, setSelectedPrizeRange] = useState('all');
@@ -79,10 +79,19 @@ const Explore = () => {
   }, [searchTerm, selectedModel, selectedPrizeRange, sortBy]);
 
   const handleModelClick = (modelId) => {
-    if (!account) {
+    // Check if wallet is connected (ownerAddress) rather than just account
+    // Account may still be initializing even when wallet is connected
+    if (!ownerAddress) {
       alert('Please connect your wallet to interact with AI models.');
       return;
     }
+    
+    // If wallet is connected but account is still loading, show a different message
+    if (ownerAddress && !account && isLoadingAccount) {
+      alert('Smart account is initializing. Please wait a moment and try again.');
+      return;
+    }
+    
     navigate(`/chat/${modelId}`);
   };
 
@@ -135,9 +144,21 @@ const Explore = () => {
       </div>
       
       <div className="models-grid">
-        {filteredAndSortedModels.map((model) => (
-          <ModelCard key={model.id} model={model} onModelClick={handleModelClick} />
-        ))}
+        {ownerAddress && !account && isLoadingAccount ? (
+          <div className="loading-spinner-container">
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+            </div>
+          </div>
+        ) : (
+          filteredAndSortedModels.map((model) => (
+            <ModelCard 
+              key={model.id} 
+              model={model} 
+              onModelClick={handleModelClick}
+            />
+          ))
+        )}
       </div>
     </div>
   );
