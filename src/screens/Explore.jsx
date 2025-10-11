@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSbcApp } from '@stablecoin.xyz/react';
 import { aiModels } from '../data/mockData';
 import '../styles/screens/Explore.css';
 
@@ -28,6 +29,7 @@ const ModelCard = ({ model, onModelClick }) => {
 
 const Explore = () => {
   const navigate = useNavigate();
+  const { account } = useSbcApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedPrizeRange, setSelectedPrizeRange] = useState('all');
@@ -77,6 +79,10 @@ const Explore = () => {
   }, [searchTerm, selectedModel, selectedPrizeRange, sortBy]);
 
   const handleModelClick = (modelId) => {
+    if (!account) {
+      alert('Please connect your wallet to interact with AI models.');
+      return;
+    }
     navigate(`/chat/${modelId}`);
   };
 

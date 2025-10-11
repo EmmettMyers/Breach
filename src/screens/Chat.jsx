@@ -27,7 +27,7 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
 
   // SBC AppKit hooks
-  const { account, ownerAddress, isLoadingAccount, forceUpdate, setForceUpdate, walletBalance, isLoadingWalletBalance, fetchWalletBalance } = useWalletState();
+  const { account, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
       console.log('Stablecoin transfer successful:', result);
@@ -121,22 +121,17 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading || isTransferLoading) return;
 
-    // Check if wallet is connected
-    if (!ownerAddress) {
-      alert('Please connect your wallet to send messages and make stablecoin transfers.');
+    // Check if smart account is available
+    if (!account) {
+      alert('Smart account not available. Please ensure your wallet is connected.');
       return;
     }
 
     // Fixed cost of 0.01 SBC (one cent) for all prompts
     const promptCost = 0.01;
-    if (walletBalance && parseFloat(walletBalance.formatted) < promptCost) {
-      alert(`Insufficient balance. You need ${promptCost} ${walletBalance.symbol} but only have ${walletBalance.formatted} ${walletBalance.symbol}.`);
-      return;
-    }
-
-    // Additional check: Ensure we have sufficient balance for the transfer
-    if (!walletBalance || parseFloat(walletBalance.formatted) < promptCost) {
-      alert(`Insufficient SBC balance. You need ${promptCost} SBC but only have ${walletBalance ? parseFloat(walletBalance.formatted).toFixed(4) : '0'} SBC. Please get SBC tokens from the SBC Dashboard or faucet.`);
+    // Check SBC balance
+    if (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < promptCost) {
+      alert(`Insufficient SBC balance. You need ${promptCost} SBC but only have ${formatSbcBalance(sbcBalance)} SBC. Please get SBC tokens from the SBC Dashboard or faucet.`);
       return;
     }
 
@@ -193,7 +188,7 @@ const Chat = () => {
         sbcTokenAddress,
         costInWei: costInWei.toString(),
         promptCost,
-        walletBalance: walletBalance?.formatted,
+        sbcBalance: formatSbcBalance(sbcBalance),
         accountAddress: account?.address
       });
 
@@ -241,7 +236,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="chat-screen" key={`chat-${forceUpdate}`}>
+    <div className="chat-screen">
       <div className="chat-header">
         <button className="back-button" onClick={() => navigate('/')}>
           ← Back
@@ -262,24 +257,6 @@ const Chat = () => {
             <span className="stat-value">{model.attempts}</span>
             <span className="stat-label">Attempts</span>
           </div>
-        </div>
-        <div className="wallet-section">
-          {!ownerAddress ? (
-            <WalletButton className="connect-wallet-btn">
-              Connect Wallet
-            </WalletButton>
-          ) : (
-            <div className="wallet-info">
-              <span className="wallet-address">
-                {ownerAddress.slice(0, 6)}...{ownerAddress.slice(-4)}
-              </span>
-              {account && (
-                <span className="smart-account">
-                  Smart Account: {account.address.slice(0, 6)}...{account.address.slice(-4)}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -329,23 +306,23 @@ const Chat = () => {
               value={inputMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder={!ownerAddress ? "Connect wallet to send messages..." : `Ask ${model.title} anything...`}
+              placeholder={`Ask ${model.title} anything...`}
               className="message-input"
               rows="1"
-              disabled={isLoading || isTransferLoading || !ownerAddress}
+              disabled={isLoading || isTransferLoading || !account}
             />
             <button
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading || isTransferLoading || !ownerAddress || (walletBalance && parseFloat(walletBalance.formatted) < 0.01)}
+              disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < 0.01)}
               className="send-button"
             >
               {isTransferLoading ? 'Processing...' : isLoading ? 'Sending...' : 
-                (walletBalance && parseFloat(walletBalance.formatted) < 0.01) ? 'Insufficient Balance' : 'Send'}
+                (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < 0.01) ? 'Insufficient Balance' : 'Send'}
             </button>
           </div>
           <div className="cost-info">
             Cost: 0.01 SBC per prompt
-            {ownerAddress && (
+            {account && (
               <span className="account-balance">
                 &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
               </span>

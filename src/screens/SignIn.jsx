@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { WalletButton, useSbcApp } from '@stablecoin.xyz/react';
 import { base } from 'viem/chains';
 import { createPublicClient, http } from 'viem';
@@ -216,25 +217,18 @@ function WalletConnectFlow() {
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { account, ownerAddress, isLoadingAccount, isRefreshing, forceUpdate, setForceUpdate, walletBalance, isLoadingWalletBalance, fetchWalletBalance, refreshAccount } = useWalletState();
-  const { disconnectWallet } = useSbcApp();
+  const { account, ownerAddress, isLoadingAccount, refreshAccount, disconnectWallet } = useSbcApp();
   const [showWalletSelector, setShowWalletSelector] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Force re-render when connection state changes
+  // Handle connection state changes
   useEffect(() => {
     if (ownerAddress && account) {
       setIsConnecting(false);
-      setForceUpdate(prev => prev + 1);
       // Optional: Auto-redirect after successful connection
       // navigate('/');
     }
   }, [ownerAddress, account, navigate]);
-
-  // Force update when wallet connection changes
-  useEffect(() => {
-    setForceUpdate(prev => prev + 1);
-  }, [ownerAddress]);
 
   // Refresh account data when component mounts or connection changes
   useEffect(() => {

@@ -62,7 +62,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="navigation" key={`nav-${forceUpdate}`}>
+    <nav className="navigation">
       <div className="nav-brand">
         <Link to="/" className="nav-logo">
           <img src="/src/assets/logos/breach_logo_white.png" alt="Breach Logo" className="logo-img" />
