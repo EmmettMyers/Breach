@@ -180,28 +180,28 @@
   .explore-screen {
     padding: 1rem;
   }
-  
+
   .search-filter-container {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
   }
-  
+
   .search-input,
   .filter-select {
     flex: none;
     width: 100%;
   }
-  
+
   .models-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .jailbreak-badges {
     flex-wrap: wrap;
   }
-  
+
   .explore-header h1 {
     font-size: 2rem;
   }
@@ -211,11 +211,11 @@
   .model-card {
     padding: 1rem;
   }
-  
+
   .model-title {
     font-size: 1.1rem;
   }
-  
+
   .model-description {
     font-size: 0.9rem;
   }
@@ -259,6 +259,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

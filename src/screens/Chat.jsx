@@ -344,7 +344,7 @@ const Chat = () => {
               value={inputMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder={`Try to jailbreak ${model.title} using prompts...`}
+              placeholder={`Enter prompts to jailbreak ${model.title}...`}
               className="message-input"
               rows="1"
               disabled={isLoading || isTransferLoading || !account}

@@ -21,7 +21,8 @@
   background: var(--color-background-darker);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
-  margin-top: 60px; /* Account for fixed navigation */
+  margin-top: 60px;
+  /* Account for fixed navigation */
 }
 
 .back-button {
@@ -160,7 +161,8 @@
   padding-right: 4rem;
   padding-left: 4rem;
   gap: 1rem;
-  min-height: 0; /* Allow flex item to shrink */
+  min-height: 0;
+  /* Allow flex item to shrink */
 }
 
 .message {
@@ -238,10 +240,14 @@
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
+
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   30% {
     transform: translateY(-10px);
     opacity: 1;
@@ -253,6 +259,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -294,9 +301,11 @@
   padding: 0.75rem 1rem;
   resize: none;
   outline: none;
-  height: 44px; /* Account for padding: 12px top + 12px bottom + 20px content = 44px */
+  height: 44px;
+  /* Account for padding: 12px top + 12px bottom + 20px content = 44px */
   min-height: 44px;
-  max-height: 184px; /* 8 lines * 20px line height + 24px padding */
+  max-height: 184px;
+  /* 8 lines * 20px line height + 24px padding */
   font-family: inherit;
   line-height: 1.4;
   overflow-y: auto;

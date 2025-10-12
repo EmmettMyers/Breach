@@ -100,7 +100,7 @@ const Explore = () => {
       <div className="search-filter-container">
         <input
           type="text"
-          placeholder="Search AI models..."
+          placeholder="Search AI models to jailbreak..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"

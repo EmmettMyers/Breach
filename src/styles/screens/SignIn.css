@@ -1,12 +1,11 @@
 /* SignIn Screen Styles */
 .signin-screen {
-  min-height: 100vh;
   background: var(--color-background);
   color: var(--color-text-primary);
 }
 
 .signin-main {
-  padding: 2rem;
+  padding: 2.5rem 0rem 4rem 0rem;
   max-width: 1400px;
   margin: 0 auto;
 }
