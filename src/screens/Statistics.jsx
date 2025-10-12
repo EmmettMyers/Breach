@@ -12,27 +12,28 @@ const Statistics = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch user stats function
+  const fetchStats = async () => {
+    if (!account?.address) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const stats = await fetchUserStats(account.address);
+      setUserStats(stats);
+    } catch (err) {
+      console.error('Failed to fetch user stats:', err);
+      setError('Failed to load statistics. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch user stats when component mounts or account changes
   useEffect(() => {
-    const fetchStats = async () => {
-      if (!account?.address) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const stats = await fetchUserStats(account.address);
-        setUserStats(stats);
-      } catch (err) {
-        console.error('Failed to fetch user stats:', err);
-        setError('Failed to load statistics. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchStats();
   }, [account?.address]);
 
@@ -55,7 +56,7 @@ const Statistics = () => {
         <ErrorState 
           title="Error Loading Statistics"
           message={error}
-          onRetry={() => window.location.reload()}
+          onRetry={fetchStats}
           fullScreen={true}
         />
       </div>
