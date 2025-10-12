@@ -64,3 +64,25 @@ export const createModelAccount = async (payload) => {
     throw error;
   }
 };
+
+export const fetchModels = async () => {
+  try {
+    const response = await fetch(`${API_URL}/crypto/models`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('API Response from /models:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch models:', error);
+    throw error;
+  }
+};

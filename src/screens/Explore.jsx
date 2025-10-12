@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSbcApp } from '@stablecoin.xyz/react';
 import { HiMenu, HiSearch } from 'react-icons/hi';
 import { aiModels } from '../data/mockData';
+import { fetchModels } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorState from '../components/ErrorState';
 import '../styles/screens/Explore.css';
 
 const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
@@ -36,8 +38,8 @@ const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter 
       return `No ${selectedModel} models found`;
     }
     if (selectedPrizeRange !== 'all') {
-      const rangeText = selectedPrizeRange === 'low' ? '0-50 SBC' : 
-                       selectedPrizeRange === 'medium' ? '51-150 SBC' : '150+ SBC';
+      const rangeText = selectedPrizeRange === 'low' ? '0-50 SBC' :
+        selectedPrizeRange === 'medium' ? '51-150 SBC' : '150+ SBC';
       return `No models found with ${rangeText} prize range`;
     }
     if (ownedFilter === 'my') {
@@ -63,7 +65,7 @@ const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter 
       </div>
       <h3 className="zero-state-title">{getZeroStateMessage()}</h3>
       <p className="zero-state-subtext">{getZeroStateSubtext()}</p>
-      <button 
+      <button
         className="zero-state-button"
         onClick={() => window.location.reload()}
       >
@@ -84,8 +86,8 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
       <div className="model-header">
         <h3 className="model-title">{model.title}</h3>
         {isOwner && (
-          <button 
-            className="model-menu-button" 
+          <button
+            className="model-menu-button"
             onClick={handleMenuClick}
             title="Model Options"
           >
@@ -123,22 +125,77 @@ const Explore = () => {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
 
+  // API data state
+  const [models, setModels] = useState([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [modelsError, setModelsError] = useState(null);
+
+  // Fetch models from API
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        setIsLoadingModels(true);
+        setModelsError(null);
+        const apiResponse = await fetchModels();
+
+        // Handle different response formats - check if it's an array or has a data property
+        const apiModels = Array.isArray(apiResponse) ? apiResponse :
+          (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
+            (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
+
+        console.log('API Response:', apiResponse);
+        console.log('Processed Models:', apiModels);
+
+        // Check if we have valid models data
+        if (!Array.isArray(apiModels) || apiModels.length === 0) {
+          console.warn('No models found in API response');
+          setModelsError('No models found');
+          setModels([]);
+          return;
+        }
+
+        // Map API data to match the expected structure
+        const mappedModels = apiModels.map((model, index) => ({
+          id: model.model_id || model._id || index + 1,
+          title: model.model_name || 'Unnamed Model',
+          description: `AI model created by ${model.username || 'Unknown User'}`,
+          creator: model.username || 'Unknown User',
+          aiModel: model.model || 'Unknown AI Model',
+          promptCost: model.prompt_cost || 0.00,
+          prize: model.prize_value || 0,
+          attempts: 0, // This would need to be calculated from other data
+          user_id: model.user_id || null
+        }));
+
+        setModels(mappedModels);
+      } catch (error) {
+        console.error('Failed to load models:', error);
+        setModelsError('Failed to load models');
+        setModels([]);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    loadModels();
+  }, []);
+
   // Get unique AI models for filter dropdown
-  const uniqueModels = [...new Set(aiModels.map(model => model.aiModel))];
+  const uniqueModels = [...new Set(models.map(model => model.aiModel))];
 
   // Check if current user owns a model
   const isModelOwner = (model) => {
-    return ownerAddress && model.creator === 'Emmett Myers'; // Only show as owned if wallet is connected
+    return ownerAddress && model.user_id === ownerAddress; // Only show as owned if wallet is connected
   };
 
   // Check if model is owned by user (for sorting purposes, regardless of wallet connection)
   const isModelOwnedByUser = (model) => {
-    return model.creator === 'Emmett Myers';
+    return model.user_id === ownerAddress;
   };
 
   // Filter and sort logic
   const filteredAndSortedModels = useMemo(() => {
-    let filtered = aiModels.filter(model => {
+    let filtered = models.filter(model => {
       const matchesSearch = model.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         model.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         model.creator.toLowerCase().includes(searchTerm.toLowerCase());
@@ -150,8 +207,8 @@ const Explore = () => {
         (selectedPrizeRange === 'medium' && model.prize > 50 && model.prize <= 150) ||
         (selectedPrizeRange === 'high' && model.prize > 150);
 
-      const matchesOwned = 
-        ownedFilter === 'all' || 
+      const matchesOwned =
+        ownedFilter === 'all' ||
         (ownedFilter === 'my' && isModelOwnedByUser(model)) ||
         (ownedFilter === 'exclude' && !isModelOwnedByUser(model));
 
@@ -164,12 +221,12 @@ const Explore = () => {
       if (ownerAddress && account) {
         const aIsOwned = isModelOwnedByUser(a);
         const bIsOwned = isModelOwnedByUser(b);
-        
+
         // If one is owned and the other isn't, prioritize owned
         if (aIsOwned && !bIsOwned) return -1;
         if (!aIsOwned && bIsOwned) return 1;
       }
-      
+
       // If both are owned or both are not owned, use the original sorting
       switch (sortBy) {
         case 'title':
@@ -190,7 +247,7 @@ const Explore = () => {
           return 0;
       }
     });
-  }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, ownerAddress, account]);
+  }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, ownerAddress, account, models]);
 
   const handleModelClick = (modelId) => {
     // Check if wallet is connected (ownerAddress) rather than just account
@@ -238,7 +295,7 @@ const Explore = () => {
   };
 
   const handleDepositPrize = () => {
-    const model = aiModels.find(m => m.id === modelMenu.modelId);
+    const model = models.find(m => m.id === modelMenu.modelId);
     if (!depositAmount || depositAmount <= 0) {
       setPopup({
         isOpen: true,
@@ -248,7 +305,7 @@ const Explore = () => {
       });
       return;
     }
-    
+
     // Simulate deposit (in real app, this would make a blockchain transaction)
     setPopup({
       isOpen: true,
@@ -261,7 +318,7 @@ const Explore = () => {
   };
 
   const handleWithdrawPrize = () => {
-    const model = aiModels.find(m => m.id === modelMenu.modelId);
+    const model = models.find(m => m.id === modelMenu.modelId);
     if (!withdrawAmount || withdrawAmount <= 0 || withdrawAmount > model.prize) {
       setPopup({
         isOpen: true,
@@ -271,7 +328,7 @@ const Explore = () => {
       });
       return;
     }
-    
+
     // Simulate withdrawal (in real app, this would make a blockchain transaction)
     setPopup({
       isOpen: true,
@@ -284,7 +341,7 @@ const Explore = () => {
   };
 
   const handleDeleteModel = () => {
-    const model = aiModels.find(m => m.id === modelMenu.modelId);
+    const model = models.find(m => m.id === modelMenu.modelId);
     setPopup({
       isOpen: true,
       title: 'Delete Model',
@@ -353,13 +410,26 @@ const Explore = () => {
       </div>
 
       <div className="models-grid">
-        {ownerAddress && !account && isLoadingAccount ? (
+        {isLoadingModels ? (
           <LoadingSpinner
             size="large"
             className="explore-loading-spinner"
           />
+        ) : ownerAddress && !account && isLoadingAccount ? (
+          <LoadingSpinner
+            size="large"
+            className="explore-loading-spinner"
+          />
+        ) : modelsError ? (
+          <ErrorState
+            title="Error Loading Models"
+            message={modelsError}
+            onRetry={() => window.location.reload()}
+            retryText="Retry"
+            className="explore-error-state"
+          />
         ) : filteredAndSortedModels.length === 0 ? (
-          <ZeroState 
+          <ZeroState
             searchTerm={searchTerm}
             selectedModel={selectedModel}
             selectedPrizeRange={selectedPrizeRange}
@@ -388,15 +458,15 @@ const Explore = () => {
 
       {/* Model Management Menu */}
       {modelMenu.isOpen && (
-        <div 
-          className="model-menu-overlay" 
+        <div
+          className="model-menu-overlay"
           onClick={closeModelMenu}
         >
-          <div 
-            className="model-menu" 
-            style={{ 
-              position: 'fixed', 
-              left: modelMenu.x, 
+          <div
+            className="model-menu"
+            style={{
+              position: 'fixed',
+              left: modelMenu.x,
               top: modelMenu.y,
               zIndex: 1000
             }}
@@ -406,7 +476,7 @@ const Explore = () => {
               <h4>Model Options</h4>
               <button className="close-menu" onClick={closeModelMenu}>×</button>
             </div>
-            
+
             <div className="model-menu-actions">
               <div className="menu-section">
                 <h5>Prize Management</h5>
@@ -435,7 +505,7 @@ const Explore = () => {
                   </button>
                 </div>
               </div>
-              
+
               <div className="menu-section">
                 <h5>Model Actions</h5>
                 <button onClick={handleDeleteModel} className="menu-button delete">

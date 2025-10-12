@@ -671,3 +671,8 @@
     font-size: 0.9rem;
   }
 }
+
+/* Error state styles for Explore */
+.explore-error-state {
+  grid-column: 1 / -1;
+}
