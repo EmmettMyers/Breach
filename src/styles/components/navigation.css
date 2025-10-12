@@ -29,12 +29,32 @@
 .logo-img {
   height: 32px;
   width: auto;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.nav-logo:hover .logo-img {
-  transform: scale(1.05);
-  filter: brightness(1.2);
+.nav-logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav-logo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  border-radius: 4px;
+}
+
+.nav-logo:hover::after {
+  opacity: 0.6;
 }
 
 .nav-list {
