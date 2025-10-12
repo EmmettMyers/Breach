@@ -7,6 +7,7 @@ import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
+import { fetchModels } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
 
@@ -53,7 +54,7 @@ const Chat = () => {
   };
 
   // SBC AppKit hooks
-  const { account, isLoadingAccount } = useSbcApp();
+  const { account, ownerAddress, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
       console.log('SBC transfer successful:', result);
@@ -133,24 +134,55 @@ const Chat = () => {
   });
 
 
-  // Find the model by ID
+  // Find the model by ID from API
   useEffect(() => {
-    const foundModel = aiModels.find(m => m.id === parseInt(modelId));
-    if (foundModel) {
-      setModel(foundModel);
-      // Add welcome message
-      setMessages([
-        {
-          id: 1,
-          type: 'ai',
-          content: `Hello! I'm ${foundModel.title}. ${foundModel.description} How can I assist you today?`,
-          timestamp: new Date()
+    const loadModel = async () => {
+      try {
+        // First try to find in mock data (for backward compatibility)
+        const mockModel = aiModels.find(m => m.id === parseInt(modelId));
+        if (mockModel) {
+          setModel(mockModel);
+          setMessages([]);
+          return;
         }
-      ]);
-    } else {
-      // Model not found, redirect to explore
-      navigate('/');
-    }
+
+        // If not found in mock data, try API
+        const apiResponse = await fetchModels();
+        const apiModels = Array.isArray(apiResponse) ? apiResponse :
+          (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
+            (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
+
+        if (Array.isArray(apiModels) && apiModels.length > 0) {
+          // Map API data to match the expected structure
+          const mappedModels = apiModels.map((model, index) => ({
+            id: model.model_id || model._id || index + 1,
+            title: model.model_name || 'Unnamed Model',
+            description: `AI model created by ${model.username || 'Unknown User'}`,
+            creator: model.username || 'Unknown User',
+            aiModel: model.model || 'Unknown AI Model',
+            promptCost: model.prompt_cost || 0.00,
+            prize: model.prize_value || 0,
+            attempts: 0,
+            user_id: model.user_id || null
+          }));
+
+          const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
+          if (foundModel) {
+            setModel(foundModel);
+            setMessages([]);
+            return;
+          }
+        }
+
+        // Model not found in either mock data or API, redirect to explore
+        navigate('/');
+      } catch (error) {
+        console.error('Failed to load model:', error);
+        navigate('/');
+      }
+    };
+
+    loadModel();
   }, [modelId, navigate]);
 
   // Auto-scroll to bottom when new messages arrive
@@ -204,7 +236,7 @@ const Chat = () => {
 
   // Check if current user owns the model
   const isModelOwner = () => {
-    return account && model && model.creator === 'Emmett Myers'; // Only show as owned if wallet is connected
+    return ownerAddress && model && model.user_id === ownerAddress; // Only show as owned if wallet is connected
   };
 
   // Model management functions
@@ -352,6 +384,9 @@ const Chat = () => {
           <div className="model-meta">
             <span className="creator">{model.creator}</span>
             <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
+            {isModelOwner() && (
+              <span className="owned-pill">Your Model</span>
+            )}
           </div>
         </div>
         <div className="model-stats">
