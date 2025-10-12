@@ -7,4 +7,4 @@ Breach is a platform that connects AI model creators with security testers to id
 This is the frontend repository.
 
 <strong>Team:</strong> Emmett Myers, Joseph Seibel<br/>
-<strong>Challenges:</strong> Brale Stablecoin Challenge, AWS Strands Agents SDK
+<strong>Challenges:</strong> Brale Stablecoin Challenge, AWS Strands Agents SDK Challenge
