@@ -235,7 +235,7 @@ const Chat = () => {
             attempts: model.attempts || 0,
             user_id: model.user_id || null,
             model_address: model.model_address || model.wallet_address || null,
-            jailbroken: model.jailbroken || false
+            jailbroken: false //model.jailbroken || false
           }));
 
           const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
