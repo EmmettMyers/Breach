@@ -181,11 +181,11 @@ const Chat = () => {
 
   // Format SBC balance
   const formatSbcBalance = (balance) => {
-    if (!balance) return '0.00';
+    if (!balance) return '0.0000';
     try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
     } catch {
-      return '0.00';
+      return '0.0000';
     }
   };
 

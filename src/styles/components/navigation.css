@@ -29,6 +29,12 @@
 .logo-img {
   height: 32px;
   width: auto;
+  transition: all 0.3s ease;
+}
+
+.nav-logo:hover .logo-img {
+  transform: scale(1.05);
+  filter: brightness(1.2);
 }
 
 .nav-list {
@@ -170,20 +176,20 @@
   .nav-right {
     gap: 0.5rem;
   }
-  
+
   .wallet-status-pill {
     max-width: 160px;
     padding: 0.3rem 0.6rem;
   }
-  
+
   .wallet-address {
     font-size: 0.75rem;
   }
-  
+
   .sbc-balance {
     font-size: 0.7rem;
   }
-  
+
   .connect-wallet-pill {
     padding: 0.4rem 0.8rem;
     font-size: 0.85rem;
@@ -196,24 +202,24 @@
     gap: 0.5rem;
     align-items: flex-end;
   }
-  
+
   .nav-list {
     gap: 4px;
   }
-  
+
   .wallet-status-pill {
     max-width: 140px;
     padding: 0.25rem 0.5rem;
   }
-  
+
   .wallet-address {
     font-size: 0.7rem;
   }
-  
+
   .sbc-balance {
     font-size: 0.65rem;
   }
-  
+
   .connect-wallet-pill {
     padding: 0.35rem 0.7rem;
     font-size: 0.8rem;

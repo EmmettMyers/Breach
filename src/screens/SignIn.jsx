@@ -78,7 +78,7 @@ function SmartAccountInfo() {
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
             balance: balance.toString(),
-            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2)
+            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
           } 
         }));
       } catch (error) {
@@ -89,7 +89,7 @@ function SmartAccountInfo() {
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
             balance: '0',
-            formattedBalance: '0.00'
+            formattedBalance: '0.0000'
           } 
         }));
       } finally {
@@ -121,7 +121,7 @@ function SmartAccountInfo() {
           window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
             detail: { 
               balance: balance.toString(),
-              formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2)
+              formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
             } 
           }));
         } catch (error) {
@@ -140,11 +140,11 @@ function SmartAccountInfo() {
 
 
   const formatSbcBalance = (balance) => {
-    if (!balance) return '0.00';
+    if (!balance) return '0.0000';
     try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(2);
+      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
     } catch {
-      return '0.00';
+      return '0.0000';
     }
   };
 

@@ -145,8 +145,8 @@ const Statistics = () => {
                 <tr>
                   <th>Jailbroken Model</th>
                   <th>AI Model</th>
-                  <th>Prompts Taken</th>
-                  <th>Total Prompts</th>
+                  <th>Your Prompts</th>
+                  <th>All Prompts</th>
                   <th>Payout (SBC)</th>
                 </tr>
               </thead>
