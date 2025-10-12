@@ -16,12 +16,9 @@ const Navigation = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isDisconnected, setIsDisconnected] = useState(false);
 
-  // Use the wallet state hook as primary source, fallback to direct useSbcApp
-  const effectiveOwnerAddress = walletStateOwnerAddress || ownerAddress;
-  const effectiveAccount = walletStateAccount || account;
-
-
-  const finalOwnerAddress = effectiveOwnerAddress;
+  // Simplified wallet state logic - prioritize direct useSbcApp over wallet state hook
+  const effectiveOwnerAddress = ownerAddress || walletStateOwnerAddress;
+  const effectiveAccount = account || walletStateAccount;
   
   // Force refresh when wallet connection changes
   useEffect(() => {
@@ -37,15 +34,15 @@ const Navigation = () => {
     }
   }, [effectiveOwnerAddress, refreshAccount, walletStateRefreshAccount]);
   
-  // Additional validation: ensure we have a proper wallet connection
+  // Simplified wallet connection check
   const isWalletConnected = !isDisconnected && 
-    finalOwnerAddress && 
-    finalOwnerAddress.length === 42 && 
-    finalOwnerAddress.startsWith('0x') &&
-    (ownerAddress || walletStateOwnerAddress); // Must have active connection from hooks
+    effectiveOwnerAddress && 
+    effectiveOwnerAddress.length === 42 && 
+    effectiveOwnerAddress.startsWith('0x') &&
+    !window.walletDisconnected;
 
-  // Override: if explicitly disconnected, never show pill
-  const shouldShowPill = isWalletConnected && !isDisconnected && !window.walletDisconnected;
+  // Show pill only if wallet is connected and not explicitly disconnected
+  const shouldShowPill = isWalletConnected;
 
   // Listen for wallet connection events
   useEffect(() => {
@@ -64,16 +61,32 @@ const Navigation = () => {
       setSbcBalance(null);
       setIsLoadingBalance(false);
       setForceUpdate(prev => prev + 1);
+      
+      // Clear all wallet state immediately
+      window.walletDisconnected = true;
+      
       // Force refresh to clear all wallet state
       if (refreshAccount) refreshAccount();
       if (walletStateRefreshAccount) walletStateRefreshAccount();
       
-      // Additional timeout to force pill removal
+      // Multiple timeouts to ensure pill removal
       setTimeout(() => {
         console.log('Force removing pill after timeout...');
         setIsDisconnected(true);
         setForceUpdate(prev => prev + 1);
+      }, 50);
+      
+      setTimeout(() => {
+        console.log('Second timeout for pill removal...');
+        setIsDisconnected(true);
+        setForceUpdate(prev => prev + 1);
       }, 100);
+      
+      setTimeout(() => {
+        console.log('Third timeout for pill removal...');
+        setIsDisconnected(true);
+        setForceUpdate(prev => prev + 1);
+      }, 200);
     };
 
     const handleSbcBalanceUpdate = (event) => {
@@ -99,6 +112,7 @@ const Navigation = () => {
   useEffect(() => {
     if (!effectiveOwnerAddress && !ownerAddress && !walletStateOwnerAddress) {
       // All wallet sources are empty, clear all state
+      setIsDisconnected(true);
       setSbcBalance(null);
       setIsLoadingBalance(false);
       setForceUpdate(prev => prev + 1);
@@ -138,15 +152,16 @@ const Navigation = () => {
       directOwnerAddress: ownerAddress,
       walletStateOwnerAddress: walletStateOwnerAddress,
       effectiveOwnerAddress: effectiveOwnerAddress,
-      finalOwnerAddress: finalOwnerAddress,
       isDisconnected: isDisconnected,
       isWalletConnected: isWalletConnected,
+      shouldShowPill: shouldShowPill,
       forceUpdate: forceUpdate,
       directAccount: account,
       walletStateAccount: walletStateAccount,
-      effectiveAccount: effectiveAccount
+      effectiveAccount: effectiveAccount,
+      windowWalletDisconnected: window.walletDisconnected
     });
-  }, [ownerAddress, walletStateOwnerAddress, effectiveOwnerAddress, finalOwnerAddress, isDisconnected, isWalletConnected, forceUpdate, account, walletStateAccount, effectiveAccount]);
+  }, [ownerAddress, walletStateOwnerAddress, effectiveOwnerAddress, isDisconnected, isWalletConnected, shouldShowPill, forceUpdate, account, walletStateAccount, effectiveAccount]);
 
   const navItems = [
     { path: '/', name: 'Explore' },
@@ -220,7 +235,7 @@ const Navigation = () => {
           <div className="wallet-status-pill" onClick={handleWalletPillClick} style={{ cursor: 'pointer' }}>
             <div className="status-indicator"></div>
             <div className="wallet-address">
-              {finalOwnerAddress.slice(0, 4)}...{finalOwnerAddress.slice(-4)}
+              {effectiveOwnerAddress.slice(0, 4)}...{effectiveOwnerAddress.slice(-4)}
             </div>
             {effectiveAccount && (
               <div className="sbc-balance">
@@ -230,7 +245,7 @@ const Navigation = () => {
           </div>
         ) : (
           <Link to="/signin" className="connect-wallet-pill">
-            Connect Wallet
+            Connect Crypto Wallet
           </Link>
         )}
       </div>

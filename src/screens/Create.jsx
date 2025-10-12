@@ -163,8 +163,8 @@ const Create = () => {
           <div className="wallet-warning">
             <div className="warning-icon">⚠️</div>
             <div className="warning-text">
-              <strong>Wallet Not Connected</strong>
-              <p>Please connect your wallet to create AI models.</p>
+              <strong>Crypto Wallet Not Connected</strong>
+              <p>Please connect your crypto wallet to create AI models.</p>
             </div>
           </div>
         )}

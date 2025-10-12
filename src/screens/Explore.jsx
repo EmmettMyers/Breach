@@ -4,6 +4,27 @@ import { useSbcApp } from '@stablecoin.xyz/react';
 import { aiModels } from '../data/mockData';
 import '../styles/screens/Explore.css';
 
+const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="popup-overlay" onClick={onClose}>
+      <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+        <div className="popup-header">
+          <h3 className="popup-title">{title}</h3>
+          <button className="popup-close" onClick={onClose}>×</button>
+        </div>
+        <div className="popup-body">
+          <p className="popup-message">{message}</p>
+        </div>
+        <div className="popup-footer">
+          <button className="popup-button" onClick={onClose}>OK</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ModelCard = ({ model, onModelClick }) => {
   return (
     <div className="model-card" onClick={() => onModelClick(model.id)}>
@@ -34,6 +55,7 @@ const Explore = () => {
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedPrizeRange, setSelectedPrizeRange] = useState('all');
   const [sortBy, setSortBy] = useState('title');
+  const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
 
   // Get unique AI models for filter dropdown
   const uniqueModels = [...new Set(aiModels.map(model => model.aiModel))];
@@ -82,17 +104,31 @@ const Explore = () => {
     // Check if wallet is connected (ownerAddress) rather than just account
     // Account may still be initializing even when wallet is connected
     if (!ownerAddress) {
-      alert('Please connect your wallet to interact with AI models.');
+      setPopup({
+        isOpen: true,
+        title: 'Crypto Wallet Required',
+        message: 'Please connect your crypto wallet to attempt to jailbreak the AI models.',
+        type: 'warning'
+      });
       return;
     }
     
     // If wallet is connected but account is still loading, show a different message
     if (ownerAddress && !account && isLoadingAccount) {
-      alert('Smart account is initializing. Please wait a moment and try again.');
+      setPopup({
+        isOpen: true,
+        title: 'Account Initializing',
+        message: 'Smart account is initializing. Please wait a moment and try again.',
+        type: 'info'
+      });
       return;
     }
     
     navigate(`/chat/${modelId}`);
+  };
+
+  const closePopup = () => {
+    setPopup({ isOpen: false, title: '', message: '', type: 'info' });
   };
 
   return (
@@ -160,6 +196,14 @@ const Explore = () => {
           ))
         )}
       </div>
+      
+      <Popup
+        isOpen={popup.isOpen}
+        onClose={closePopup}
+        title={popup.title}
+        message={popup.message}
+        type={popup.type}
+      />
     </div>
   );
 };

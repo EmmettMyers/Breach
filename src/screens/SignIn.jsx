@@ -228,12 +228,13 @@ function SmartAccountInfo() {
   );
 }
 
-function WalletConnectFlow() {
+function WalletConnectFlow({ onDisconnect }) {
   const { ownerAddress, disconnectWallet, refreshAccount } = useSbcApp();
   const prevOwnerAddress = useRef(null);
 
   useEffect(() => {
     if (ownerAddress && !prevOwnerAddress.current) {
+      console.log('New wallet connection detected:', ownerAddress);
       // Only refresh once when wallet first connects
       refreshAccount();
       // Dispatch custom event to notify Navigation component
@@ -244,11 +245,12 @@ function WalletConnectFlow() {
     prevOwnerAddress.current = ownerAddress;
   }, [ownerAddress, refreshAccount]);
 
-  if (!ownerAddress) {
+  // Simple check: if no ownerAddress or global disconnect state is true, show connect prompt
+  if (!ownerAddress || window.walletDisconnected) {
     return (
       <div className="connect-prompt">
-        <h3>Connect Your Wallet</h3>
-        <p>Enables creation of a smart account with gasless transactions and payments for jailbreak chats using SBC</p>
+        <h3>Connect Your Crypto Wallet</h3>
+        <p>Enables creation of a smart account with gasless transactions and payments for jailbreak chats using stablecoin</p>
         <div className="wallet-button-container">
           <WalletButton
             walletType="auto"
@@ -259,7 +261,7 @@ function WalletConnectFlow() {
                 onClick={onClick}
                 disabled={isConnecting}
               >
-                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                {isConnecting ? 'Connecting...' : 'Connect Crypto Wallet'}
               </button>
             )}
           />
@@ -271,7 +273,7 @@ function WalletConnectFlow() {
   return (
     <div className="connected-content">
       <div className="left-column">
-        <WalletStatus onDisconnect={disconnectWallet} />
+        <WalletStatus onDisconnect={onDisconnect} />
         <SmartAccountInfo />
       </div>
       <div className="right-column">
@@ -287,14 +289,14 @@ const SignIn = () => {
   const [showWalletSelector, setShowWalletSelector] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Handle connection state changes
+  // Handle connection state changes - simplified
   useEffect(() => {
     if (ownerAddress && account) {
       setIsConnecting(false);
-      // Optional: Auto-redirect after successful connection
-      // navigate('/');
+      // Reset global disconnect state when wallet reconnects
+      window.walletDisconnected = false;
     }
-  }, [ownerAddress, account, navigate]);
+  }, [ownerAddress, account]);
 
   // Refresh account data when component mounts or connection changes
   useEffect(() => {
@@ -340,6 +342,17 @@ const SignIn = () => {
     }
   }, [isConnecting]);
 
+  // Listen for wallet connection events to reset disconnect state
+  useEffect(() => {
+    const handleWalletConnection = () => {
+      console.log('Wallet connection event received, resetting disconnect state');
+      window.walletDisconnected = false;
+    };
+
+    window.addEventListener('walletConnected', handleWalletConnection);
+    return () => window.removeEventListener('walletConnected', handleWalletConnection);
+  }, []);
+
   const handleDisconnect = () => {
     console.log('Disconnect button clicked, dispatching events...');
     // Set global state immediately
@@ -349,15 +362,6 @@ const SignIn = () => {
     setIsConnecting(false);
     // Dispatch custom event to notify Navigation component
     window.dispatchEvent(new CustomEvent('walletDisconnected'));
-    
-    // Dispatch multiple events to ensure Navigation gets it
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('walletDisconnected'));
-    }, 50);
-    
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('walletDisconnected'));
-    }, 100);
   };
 
   const handleWalletConnect = useCallback(() => {
@@ -381,7 +385,7 @@ const SignIn = () => {
   return (
     <div className="signin-screen">
       <main className="signin-main">
-        <WalletConnectFlow />
+        <WalletConnectFlow onDisconnect={handleDisconnect} />
       </main>
     </div>
   );
