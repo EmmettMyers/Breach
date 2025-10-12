@@ -224,7 +224,7 @@ const Chat = () => {
             aiModel: model.model || 'Unknown AI Model',
             promptCost: model.prompt_cost || 0.00,
             prize: model.prize_value || 0,
-            attempts: 0,
+            attempts: model.attempts || 0,
             user_id: model.user_id || null,
             model_address: model.model_address || model.wallet_address || null
           }));

@@ -163,7 +163,7 @@ const Explore = () => {
           aiModel: model.model || 'Unknown AI Model',
           promptCost: model.prompt_cost || 0.00,
           prize: model.prize_value || 0,
-          attempts: 0, // This would need to be calculated from other data
+          attempts: model.attempts || 0,
           user_id: model.user_id || null
         }));
 
