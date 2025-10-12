@@ -7,7 +7,7 @@ import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
-import { fetchModels, sendAgentMessage } from '../utils/apiService';
+import { fetchModels, sendAgentMessage, fetchMessages } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
 
@@ -247,6 +247,40 @@ const Chat = () => {
 
     loadModel();
   }, [modelId, navigate]);
+
+  // Load existing messages when model is loaded and user is connected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!model || !account?.address) return;
+
+      try {
+        const messagesResponse = await fetchMessages(
+          account.address, // Use wallet address as user_id
+          model.model_address || model.id // Use model_address if available, fallback to id
+        );
+        
+        if (messagesResponse && messagesResponse.messages && Array.isArray(messagesResponse.messages)) {
+          // Transform API messages to match the expected format
+          const transformedMessages = messagesResponse.messages.map((msg, index) => ({
+            id: msg.id || Date.now() + index,
+            type: msg.type || (msg.role === 'user' ? 'user' : 'ai'),
+            content: msg.content || msg.message || '',
+            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+            calledTools: msg.called_tools || null,
+            model: msg.model || model.title
+          }));
+          
+          setMessages(transformedMessages);
+        }
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+        // Don't show error to user, just start with empty messages
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+  }, [model, account?.address]);
 
   // Manual scroll function
   const scrollToBottom = (smooth = true) => {

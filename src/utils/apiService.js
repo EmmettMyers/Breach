@@ -87,6 +87,31 @@ export const fetchModels = async () => {
   }
 };
 
+export const fetchMessages = async (userId, modelAddress) => {
+  try {
+    const response = await fetch(`${API_URL}/messages?user_id=${userId}&model_address=${modelAddress}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        // No messages found for this user and model - return empty array
+        return { user_id: userId, model_address: modelAddress, messages: [] };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch messages:', error);
+    throw error;
+  }
+};
+
 export const sendAgentMessage = async (message, modelAddress, userId, userSmartAddress) => {
   try {
     const response = await fetch(`${API_URL}/agent`, {
