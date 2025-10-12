@@ -4,7 +4,7 @@ export const aiModels = [
     id: 1,
     title: "AutoService Pro",
     description: "Automotive customer service AI trained on GPT-4 for handling vehicle inquiries, warranty claims, and technical support.",
-    creator: "AutoCorp Solutions",
+    creator: "Emmett Myers",
     aiModel: "GPT-4",
     promptCost: 0.01,
     prize: 150,
@@ -139,6 +139,26 @@ export const aiModels = [
     promptCost: 0.02,
     prize: 250,
     attempts: 25
+  },
+  {
+    id: 15,
+    title: "CodeMaster Pro",
+    description: "Advanced coding assistant built on GPT-4 for complex algorithm development, code optimization, and debugging assistance.",
+    creator: "Emmett Myers",
+    aiModel: "GPT-4",
+    promptCost: 0.05,
+    prize: 300,
+    attempts: 30
+  },
+  {
+    id: 16,
+    title: "DataInsight Analyzer",
+    description: "Data science AI powered by Claude 3 for statistical analysis, machine learning model development, and data visualization.",
+    creator: "Emmett Myers",
+    aiModel: "Claude 3",
+    promptCost: 0.04,
+    prize: 200,
+    attempts: 20
   }
 ];
 

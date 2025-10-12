@@ -20,6 +20,9 @@ const Chat = () => {
   const [transferStatus, setTransferStatus] = useState(null);
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [showModelMenu, setShowModelMenu] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmountChat, setWithdrawAmountChat] = useState('');
   const messagesEndRef = useRef(null);
   const transferStatusTimeoutRef = useRef(null);
 
@@ -198,6 +201,56 @@ const Chat = () => {
     }
   };
 
+  // Check if current user owns the model
+  const isModelOwner = () => {
+    return account && model && model.creator === 'Emmett Myers'; // Only show as owned if wallet is connected
+  };
+
+  // Model management functions
+  const handleDepositPrize = () => {
+    if (!depositAmount || depositAmount <= 0) {
+      setTransferStatusWithTimeout({ 
+        type: 'error', 
+        message: 'Please enter a valid deposit amount.' 
+      });
+      return;
+    }
+    
+    // Simulate deposit (in real app, this would make a blockchain transaction)
+    setTransferStatusWithTimeout({ 
+      type: 'success', 
+      message: `Successfully deposited ${depositAmount} SBC to ${model.title}'s prize pool.` 
+    });
+    setDepositAmount('');
+    setShowModelMenu(false);
+  };
+
+  const handleWithdrawPrize = () => {
+    if (!withdrawAmountChat || withdrawAmountChat <= 0 || withdrawAmountChat > model.prize) {
+      setTransferStatusWithTimeout({ 
+        type: 'error', 
+        message: `Please enter a valid withdrawal amount (max: ${model.prize} SBC).` 
+      });
+      return;
+    }
+    
+    // Simulate withdrawal (in real app, this would make a blockchain transaction)
+    setTransferStatusWithTimeout({ 
+      type: 'success', 
+      message: `Successfully withdrew ${withdrawAmountChat} SBC from ${model.title}'s prize pool.` 
+    });
+    setWithdrawAmountChat('');
+    setShowModelMenu(false);
+  };
+
+  const handleDeleteModel = () => {
+    setTransferStatusWithTimeout({ 
+      type: 'error', 
+      message: `Are you sure you want to delete "${model.title}"? This action cannot be undone.` 
+    });
+    setShowModelMenu(false);
+  };
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -300,6 +353,46 @@ const Chat = () => {
           </div>
         </div>
       </div>
+
+      {/* Model Management Navigation - Only show for model owners */}
+      {isModelOwner() && (
+        <div className="model-management-nav">
+          <div className="nav-section">
+            <div className="nav-header">
+              <h4>Model Management</h4>
+              <div className="nav-actions">
+                <div className="action-group">
+                  <input
+                    type="number"
+                    placeholder="Deposit amount (SBC)"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="nav-input"
+                  />
+                  <button onClick={handleDepositPrize} className="nav-button deposit">
+                    Deposit Prize
+                  </button>
+                </div>
+                <div className="action-group">
+                  <input
+                    type="number"
+                    placeholder="Withdraw amount (SBC)"
+                    value={withdrawAmountChat}
+                    onChange={(e) => setWithdrawAmountChat(e.target.value)}
+                    className="nav-input"
+                  />
+                  <button onClick={handleWithdrawPrize} className="nav-button withdraw">
+                    Withdraw Prize
+                  </button>
+                </div>
+                <button onClick={handleDeleteModel} className="nav-button delete">
+                  Delete Model
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="chat-container">
         <div className="messages-container">

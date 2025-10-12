@@ -1,5 +1,5 @@
 // API service for fetching user statistics
-const API_URL = ''; //import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const fetchUserStats = async (userId) => {
   try {

@@ -46,6 +46,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .model-title {
@@ -160,7 +163,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1.5rem 0;
+  padding: 1.5rem 0 1.5rem 0;
   display: flex;
   flex-direction: column;
   padding-right: 4rem;
@@ -471,4 +474,147 @@
   color: #ff6b6b;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+/* Model Management Navigation */
+.model-management-nav {
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  flex-shrink: 0;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-input {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  width: 200px;
+  transition: all 0.2s ease;
+}
+
+.nav-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-input::placeholder {
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.nav-button {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-button.deposit {
+  background: #0a8637;
+  color: white;
+}
+
+.nav-button.deposit:hover {
+  background: #0b9a3e;
+  transform: translateY(-1px);
+}
+
+.nav-button.withdraw {
+  background: #d97706;
+  color: white;
+}
+
+.nav-button.withdraw:hover {
+  background: #ea8a0a;
+  transform: translateY(-1px);
+}
+
+.nav-button.delete {
+  background: #dc2626;
+  color: white;
+}
+
+.nav-button.delete:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
+}
+
+/* Responsive model management nav */
+@media (max-width: 768px) {
+  .model-management-nav {
+    padding: 1rem;
+  }
+  
+  .nav-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .action-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .nav-input {
+    width: 100%;
+  }
+  
+  .nav-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-section h4 {
+    font-size: 0.9rem;
+  }
+  
+  .nav-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+  }
 }
