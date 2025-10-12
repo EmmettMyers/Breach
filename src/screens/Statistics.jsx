@@ -181,7 +181,6 @@ const Statistics = () => {
                     <th>Jailbroken Model Name</th>
                     <th>Jailbroken Model Type</th>
                     <th>Your Prompts</th>
-                    <th>Total Prompts</th>
                     <th>Payout (SBC)</th>
                   </tr>
                 </thead>
@@ -192,13 +191,12 @@ const Statistics = () => {
                          <td className="model-name">{stats.model_name}</td>
                          <td className="model-type">{getModelDisplayName(stats.model)}</td>
                          <td className="your-prompts">{stats.your_prompts.toLocaleString()}</td>
-                         <td className="total-prompts">{stats.total_prompts.toLocaleString()}</td>
-                         <td className="payout">{stats.payout.toFixed(3)}</td>
+                         <td className="payout">{stats.payout.toFixed(4)}</td>
                        </tr>
                      ))
                    ) : (
                      <tr>
-                       <td colSpan="5" className="empty-table-message">
+                       <td colSpan="4" className="empty-table-message">
                          You haven't broken any models yet.
                        </td>
                      </tr>

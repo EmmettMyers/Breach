@@ -225,6 +225,7 @@ const Chat = () => {
             attempts: model.attempts || 0,
             user_id: model.user_id || null,
             model_address: model.model_address || model.wallet_address || null,
+            smart_address: model.smartAccount.address || null,
             jailbroken: false //model.jailbroken || false
           }));
 
@@ -443,7 +444,7 @@ const Chat = () => {
         await sendSBCTransfer({
           account,
           sendUserOperation,
-          recipientAddress: '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
+          recipientAddress: model.smart_address || '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
           amount: model.promptCost.toString() // Send promptCost SBC per message
         });
       } catch (error) {
