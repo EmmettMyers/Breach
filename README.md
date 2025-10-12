@@ -19,7 +19,7 @@ This is the frontend repository.
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/EmmettMyers/hack-midwest-2025.git
    cd hack-midwest-2025
    ```
 
