@@ -7,6 +7,7 @@ import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
 
 const Chat = () => {
@@ -325,6 +326,17 @@ const Chat = () => {
     return (
       <div className="chat-screen">
         <div className="loading">Loading model...</div>
+      </div>
+    );
+  }
+
+  if (isLoadingAccount) {
+    return (
+      <div className="chat-screen">
+        <LoadingSpinner
+          size="large" 
+          fullScreen={true}
+        />
       </div>
     );
   }

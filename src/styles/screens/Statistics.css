@@ -205,6 +205,96 @@
   transition: width 0.3s ease;
 }
 
+/* Model Stats Section */
+.model-stats-section {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.model-stats-table-container {
+  background: var(--color-background-darker);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.model-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.model-stats-table thead {
+  background: var(--color-background);
+}
+
+.model-stats-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-background-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.95rem;
+}
+
+.model-stats-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.95rem;
+}
+
+.model-stats-table tbody tr:hover {
+  background: var(--color-nav-hover);
+}
+
+.model-stats-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.model-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.model-type {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.your-prompts {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.total-prompts {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.payout {
+  font-weight: 600;
+  color: #00ff88;
+  text-align: right;
+  font-size: 1.1rem;
+}
+
+.empty-table-message {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: 2rem 1rem;
+  font-size: 1rem;
+}
+
 /* Jailbreaks Section */
 .jailbreaks-section {
   margin-bottom: 3rem;
@@ -420,6 +510,14 @@
     max-width: 200px;
   }
   
+  .model-stats-table-container {
+    overflow-x: auto;
+  }
+  
+  .model-stats-table {
+    min-width: 600px;
+  }
+  
   .jailbreaks-table-container {
     overflow-x: auto;
   }
@@ -440,6 +538,12 @@
   
   .performance-value {
     font-size: 1.5rem;
+  }
+  
+  .model-stats-table th,
+  .model-stats-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
   }
   
   .jailbreaks-table th,

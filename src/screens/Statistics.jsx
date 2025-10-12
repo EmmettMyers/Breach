@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWalletState } from '../hooks/useWalletState';
-import { fetchUserStats } from '../utils/apiService';
+import { fetchUserStats, fetchModelStats } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import NoDataState from '../components/NoDataState';
@@ -9,6 +9,7 @@ import '../styles/screens/Statistics.css';
 const Statistics = () => {
   const { account } = useWalletState();
   const [userStats, setUserStats] = useState(null);
+  const [modelStats, setModelStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,10 +23,14 @@ const Statistics = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const stats = await fetchUserStats(account.address);
+      const [stats, modelData] = await Promise.all([
+        fetchUserStats(account.address),
+        fetchModelStats(account.address)
+      ]);
       setUserStats(stats);
+      setModelStats(modelData);
     } catch (err) {
-      console.error('Failed to fetch user stats:', err);
+      console.error('Failed to fetch statistics:', err);
       setError('Failed to load statistics. Please try again.');
     } finally {
       setIsLoading(false);
@@ -152,6 +157,44 @@ const Statistics = () => {
             </div>
           </div>
         </div>
+
+        {/* Model Statistics Table */}
+        {modelStats && Object.keys(modelStats).length > -1 && (
+          <div className="model-stats-section">
+            <div className="model-stats-table-container">
+              <table className="model-stats-table">
+                <thead>
+                  <tr>
+                    <th>Model Name</th>
+                    <th>Model Type</th>
+                    <th>Your Prompts</th>
+                    <th>Total Prompts</th>
+                    <th>Payout (SBC)</th>
+                  </tr>
+                </thead>
+                 <tbody>
+                   {Object.keys(modelStats).length > 0 ? (
+                     Object.entries(modelStats).map(([modelName, stats]) => (
+                       <tr key={modelName}>
+                         <td className="model-name">{stats.model_name}</td>
+                         <td className="model-type">{stats.model}</td>
+                         <td className="your-prompts">{stats.your_prompts.toLocaleString()}</td>
+                         <td className="total-prompts">{stats.total_prompts.toLocaleString()}</td>
+                         <td className="payout">{stats.payout.toFixed(3)}</td>
+                       </tr>
+                     ))
+                   ) : (
+                     <tr>
+                       <td colSpan="5" className="empty-table-message">
+                         No model statistics available
+                       </td>
+                     </tr>
+                   )}
+                 </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

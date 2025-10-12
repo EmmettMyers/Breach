@@ -21,3 +21,24 @@ export const fetchUserStats = async (userId) => {
     throw error;
   }
 };
+
+export const fetchModelStats = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/crypto/model_stats?user_id=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch model stats:', error);
+    throw error;
+  }
+};
