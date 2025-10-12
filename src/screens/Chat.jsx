@@ -26,6 +26,8 @@ const Chat = () => {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmountChat, setWithdrawAmountChat] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showJailbreakSuccess, setShowJailbreakSuccess] = useState(false);
+  const [isModelJailbroken, setIsModelJailbroken] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const transferStatusTimeoutRef = useRef(null);
@@ -99,15 +101,20 @@ const Chat = () => {
             calledTools: response.called_tools || null,
             model: response.model || model.title
           };
+
+          console.log('Debug - aiResponse:', aiResponse);
+          console.log('Debug - jailbreak:', response.called_tools && response.called_tools.length > 0);
           
           setMessages(prev => [...prev, aiResponse]);
           
-          // Show success message if tools were called (jailbreak successful)
+          // Show jailbreak success animation if tools were called
           if (response.called_tools && response.called_tools.length > 0) {
-            setTransferStatusWithTimeout({ 
-              type: 'success', 
-              message: `Jailbreak successful! Tools called: ${response.called_tools.join(', ')}` 
-            });
+            setShowJailbreakSuccess(true);
+            setIsModelJailbroken(true);
+            // Auto-hide animation after 3 seconds
+            setTimeout(() => {
+              setShowJailbreakSuccess(false);
+            }, 3000);
           }
         } catch (error) {
           console.error('Failed to generate AI response:', error);
@@ -204,6 +211,7 @@ const Chat = () => {
         const mockModel = aiModels.find(m => m.id === parseInt(modelId));
         if (mockModel) {
           setModel(mockModel);
+          setIsModelJailbroken(mockModel.jailbroken || false);
           setMessages([]);
           return;
         }
@@ -226,12 +234,14 @@ const Chat = () => {
             prize: model.prize_value || 0,
             attempts: model.attempts || 0,
             user_id: model.user_id || null,
-            model_address: model.model_address || model.wallet_address || null
+            model_address: model.model_address || model.wallet_address || null,
+            jailbroken: model.jailbroken || false
           }));
 
           const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
           if (foundModel) {
             setModel(foundModel);
+            setIsModelJailbroken(foundModel.jailbroken || false);
             setMessages([]);
             return;
           }
@@ -572,6 +582,16 @@ const Chat = () => {
       )}
 
       <div className="chat-container">
+        {/* Jailbreak Success Animation Overlay */}
+        {showJailbreakSuccess && (
+          <div className="jailbreak-success-overlay">
+            <div className="jailbreak-success-content">
+              <div className="success-checkmark">✓</div>
+              <div className="success-message">Successful Jailbreak!</div>
+            </div>
+          </div>
+        )}
+        
         <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
           {messages.map((message) => (
             <div key={message.id} className={`message ${message.type}`}>
@@ -626,33 +646,44 @@ const Chat = () => {
         )}
 
         <div className="input-container">
-          <div className="input-wrapper">
-            <textarea
-              value={inputMessage}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              placeholder={`Enter prompts to jailbreak ${model.title}...`}
-              className="message-input"
-              rows="1"
-              disabled={isLoading || isTransferLoading || !account}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost)}
-              className="send-button"
-            >
-              {isTransferLoading ? 'Processing...' : isLoading ? 'Sending...' : 
-                (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost) ? 'Insufficient Balance' : 'Send'}
-            </button>
-          </div>
-          <div className="cost-info">
-            Cost: {parseFloat(model.promptCost).toFixed(4)} SBC per prompt
-            {account && (
-              <span className="account-balance">
-                &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
-              </span>
-            )}
-          </div>
+          {isModelJailbroken ? (
+            <div className="jailbreak-lock-message">
+              <div className="success-check">✓</div>
+              <div className="lock-text">
+                <span>Model Successfully Jailbroken!</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="input-wrapper">
+                <textarea
+                  value={inputMessage}
+                  onChange={handleInputChange}
+                  onKeyPress={handleKeyPress}
+                  placeholder={`Enter prompts to jailbreak ${model.title}...`}
+                  className="message-input"
+                  rows="1"
+                  disabled={isLoading || isTransferLoading || !account}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost)}
+                  className="send-button"
+                >
+                  {isTransferLoading ? 'Processing...' : isLoading ? 'Sending...' : 
+                    (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost) ? 'Insufficient Balance' : 'Send'}
+                </button>
+              </div>
+              <div className="cost-info">
+                Cost: {parseFloat(model.promptCost).toFixed(4)} SBC per prompt
+                {account && (
+                  <span className="account-balance">
+                    &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

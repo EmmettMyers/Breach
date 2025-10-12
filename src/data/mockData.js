@@ -8,7 +8,8 @@ export const aiModels = [
     aiModel: "GPT-4",
     promptCost: 0.01,
     prize: 150,
-    attempts: 15
+    attempts: 15,
+    jailbroken: false
   },
   {
     id: 2,
@@ -18,7 +19,8 @@ export const aiModels = [
     aiModel: "Claude 3",
     promptCost: 0.025,
     prize: 80,
-    attempts: 8
+    attempts: 8,
+    jailbroken: true
   },
   {
     id: 3,
@@ -28,7 +30,8 @@ export const aiModels = [
     aiModel: "Gemini 2.5",
     promptCost: 0.02,
     prize: 120,
-    attempts: 12
+    attempts: 12,
+    jailbroken: false
   },
   {
     id: 4,
@@ -68,7 +71,8 @@ export const aiModels = [
     aiModel: "GPT-4",
     promptCost: 0.03,
     prize: 220,
-    attempts: 22
+    attempts: 22,
+    jailbroken: true
   },
   {
     id: 8,

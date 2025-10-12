@@ -137,6 +137,41 @@
   margin-bottom: 0.75rem;
 }
 
+.model-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jailbroken-indicator {
+  background: #0a8637;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(10, 134, 55, 0.3);
+}
+
+.jailbroken-check {
+  line-height: 1;
+}
+
+.model-card.jailbroken {
+  border-color: rgba(10, 134, 55, 0.3);
+  background: linear-gradient(135deg, rgba(10, 134, 55, 0.1), rgba(10, 134, 55, 0.05));
+}
+
+.model-card.jailbroken:hover {
+  border-color: rgba(10, 134, 55, 0.5);
+  background: linear-gradient(135deg, rgba(10, 134, 55, 0.15), rgba(10, 134, 55, 0.08));
+}
+
 .model-title {
   font-size: 1.3rem;
   font-weight: 600;
@@ -175,6 +210,17 @@
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 500;
+}
+
+.jailbreak-badges .jailbroken-badge {
+  background: #0a8637;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .model-description {

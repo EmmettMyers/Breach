@@ -29,7 +29,7 @@ const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
   );
 };
 
-const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter }) => {
+const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter, jailbrokenFilter }) => {
   const getZeroStateMessage = () => {
     if (searchTerm) {
       return `No models found matching "${searchTerm}"`;
@@ -48,11 +48,17 @@ const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter 
     if (ownedFilter === 'exclude') {
       return 'No models found from other creators';
     }
+    if (jailbrokenFilter === 'jailbroken') {
+      return 'No jailbroken models found';
+    }
+    if (jailbrokenFilter === 'not-jailbroken') {
+      return 'No non-jailbroken models found';
+    }
     return 'No models found';
   };
 
   const getZeroStateSubtext = () => {
-    if (searchTerm || selectedModel !== 'all' || selectedPrizeRange !== 'all' || ownedFilter !== 'all') {
+    if (searchTerm || selectedModel !== 'all' || selectedPrizeRange !== 'all' || ownedFilter !== 'all' || jailbrokenFilter !== 'all') {
       return 'Try adjusting your filters to see more results';
     }
     return 'Check back later for new models';
@@ -82,9 +88,16 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
   };
 
   return (
-    <div className={`model-card ${isOwner ? 'owned' : ''}`} onClick={() => onModelClick(model.id)}>
+    <div className={`model-card ${isOwner ? 'owned' : ''} ${model.jailbroken ? 'jailbroken' : ''}`} onClick={() => onModelClick(model.id)}>
       <div className="model-header">
-        <h3 className="model-title">{model.title}</h3>
+        <div className="model-title-container">
+          {model.jailbroken && (
+            <div className="jailbroken-indicator">
+              <span className="jailbroken-check">✓</span>
+            </div>
+          )}
+          <h3 className="model-title">{model.title}</h3>
+        </div>
         {isOwner && (
           <button
             className="model-menu-button"
@@ -97,9 +110,16 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
       </div>
 
       <div className="jailbreak-badges">
+        {model.jailbroken && (
+          <span className="jailbroken-badge">Jailbroken</span>
+        )}
         <span className="prize">{parseFloat(model.prize).toFixed(4)} SBC Prize</span>
-        <span className="prompt-cost">{parseFloat(model.promptCost).toFixed(4)} SBC/prompt</span>
-        <span className="attempts">{model.attempts} attempts</span>
+        {!model.jailbroken && (
+          <>
+            <span className="prompt-cost">{parseFloat(model.promptCost).toFixed(4)} SBC/prompt</span>
+            <span className="attempts">{model.attempts} attempts</span>
+          </>
+        )}
       </div>
 
       <p className="model-description">{model.description}</p>
@@ -120,6 +140,7 @@ const Explore = () => {
   const [selectedPrizeRange, setSelectedPrizeRange] = useState('all');
   const [sortBy, setSortBy] = useState('title');
   const [ownedFilter, setOwnedFilter] = useState('all');
+  const [jailbrokenFilter, setJailbrokenFilter] = useState('all');
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [modelMenu, setModelMenu] = useState({ isOpen: false, modelId: null, x: 0, y: 0 });
   const [depositAmount, setDepositAmount] = useState('');
@@ -164,7 +185,8 @@ const Explore = () => {
           promptCost: model.prompt_cost || 0.00,
           prize: model.prize_value || 0,
           attempts: model.attempts || 0,
-          user_id: model.user_id || null
+          user_id: model.user_id || null,
+          jailbroken: model.jailbroken || false
         }));
 
         setModels(mappedModels);
@@ -212,7 +234,12 @@ const Explore = () => {
         (ownedFilter === 'my' && isModelOwnedByUser(model)) ||
         (ownedFilter === 'exclude' && !isModelOwnedByUser(model));
 
-      return matchesSearch && matchesModel && matchesPrize && matchesOwned;
+      const matchesJailbroken =
+        jailbrokenFilter === 'all' ||
+        (jailbrokenFilter === 'jailbroken' && model.jailbroken) ||
+        (jailbrokenFilter === 'not-jailbroken' && !model.jailbroken);
+
+      return matchesSearch && matchesModel && matchesPrize && matchesOwned && matchesJailbroken;
     });
 
     // Sort the filtered results - show owned models first (only if wallet is connected)
@@ -247,7 +274,7 @@ const Explore = () => {
           return 0;
       }
     });
-  }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, ownerAddress, account, models]);
+  }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, jailbrokenFilter, ownerAddress, account, models]);
 
   const handleModelClick = (modelId) => {
     // Check if wallet is connected (ownerAddress) rather than just account
@@ -363,6 +390,20 @@ const Explore = () => {
         />
 
         <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="filter-select"
+        >
+          <option value="title">Title A-Z</option>
+          <option value="prize-high">Prize H→L</option>
+          <option value="prize-low">Prize L→H</option>
+          <option value="cost-high">Cost H→L</option>
+          <option value="cost-low">Cost L→H</option>
+          <option value="attempts-high">Attempts H→L</option>
+          <option value="attempts-low">Attempts L→H</option>
+        </select>
+
+        <select
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
           className="filter-select"
@@ -385,27 +426,23 @@ const Explore = () => {
         </select>
 
         <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="filter-select"
-        >
-          <option value="title">Title A-Z</option>
-          <option value="prize-high">Prize (High to Low)</option>
-          <option value="prize-low">Prize (Low to High)</option>
-          <option value="cost-high">Cost (High to Low)</option>
-          <option value="cost-low">Cost (Low to High)</option>
-          <option value="attempts-high">Attempts (High to Low)</option>
-          <option value="attempts-low">Attempts (Low to High)</option>
-        </select>
-
-        <select
           value={ownedFilter}
           onChange={(e) => setOwnedFilter(e.target.value)}
           className="filter-select"
         >
           <option value="all">All User Models</option>
-          <option value="my">My Models Only</option>
-          <option value="exclude">Exclude My Models</option>
+          <option value="my">My Models</option>
+          <option value="exclude">Not My Models</option>
+        </select>
+
+        <select
+          value={jailbrokenFilter}
+          onChange={(e) => setJailbrokenFilter(e.target.value)}
+          className="filter-select"
+        >
+          <option value="all">All Status</option>
+          <option value="jailbroken">Jailbroken</option>
+          <option value="not-jailbroken">Not Jailbroken</option>
         </select>
       </div>
 
@@ -434,6 +471,7 @@ const Explore = () => {
             selectedModel={selectedModel}
             selectedPrizeRange={selectedPrizeRange}
             ownedFilter={ownedFilter}
+            jailbrokenFilter={jailbrokenFilter}
           />
         ) : (
           filteredAndSortedModels.map((model) => (
