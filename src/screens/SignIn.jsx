@@ -248,7 +248,7 @@ function WalletConnectFlow() {
     return (
       <div className="connect-prompt">
         <h3>Connect Your Wallet</h3>
-        <p>Connect your wallet to create a smart account with gasless transactions</p>
+        <p>Enables creation of a smart account with gasless transactions and payments for jailbreak chats using SBC</p>
         <div className="wallet-button-container">
           <WalletButton
             walletType="auto"

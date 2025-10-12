@@ -151,7 +151,8 @@ const Navigation = () => {
   const navItems = [
     { path: '/', name: 'Explore' },
     { path: '/create', name: 'Create' },
-    { path: '/statistics', name: 'Statistics' }
+    { path: '/statistics', name: 'Statistics' },
+    { path: '/about', name: 'About' }
   ];
 
   // Handle wallet pill click to navigate to sign-in
@@ -198,7 +199,7 @@ const Navigation = () => {
   return (
     <nav className="navigation">
       <div className="nav-brand">
-        <Link to="/" className="nav-logo">
+        <Link to="/about" className="nav-logo">
           <img src="/src/assets/logos/breach_logo_white.png" alt="Breach Logo" className="logo-img" />
         </Link>
       </div>
@@ -228,7 +229,7 @@ const Navigation = () => {
             )}
           </div>
         ) : (
-          <Link to="/signin" className="nav-link">
+          <Link to="/signin" className="connect-wallet-pill">
             Connect Wallet
           </Link>
         )}

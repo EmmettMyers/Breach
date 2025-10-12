@@ -49,19 +49,20 @@
   text-decoration: none;
   padding: 8px 12px;
   border-radius: 4px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.3s ease;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .nav-link:hover {
-  background-color: var(--color-nav-hover);
-  color: var(--color-nav-text);
+  background-color: transparent;
+  color: var(--color-primary-light);
 }
 
 .nav-link.active {
-  background-color: var(--color-nav-active);
-  color: var(--color-nav-text);
+  background-color: transparent;
+  color: var(--color-primary-light);
+  font-weight: 700;
 }
 
 /* Navigation right side */
@@ -69,6 +70,34 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Primary Connect Wallet Pill */
+.connect-wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.connect-wallet-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  color: white;
+  text-decoration: none;
+}
+
+.connect-wallet-pill:active {
+  transform: translateY(0);
 }
 
 /* Wallet Status Pill */
@@ -135,6 +164,11 @@
   .sbc-balance {
     font-size: 0.7rem;
   }
+  
+  .connect-wallet-pill {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -159,5 +193,10 @@
   
   .sbc-balance {
     font-size: 0.65rem;
+  }
+  
+  .connect-wallet-pill {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
   }
 }

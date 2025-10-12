@@ -8,6 +8,7 @@ import Chat from './screens/Chat';
 import Statistics from './screens/Statistics';
 import Create from './screens/Create';
 import SignIn from './screens/SignIn';
+import About from './screens/About';
 
 // SBC AppKit configuration
 const sbcConfig = {
@@ -30,6 +31,7 @@ function App() {
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/create" element={<Create />} />
               <Route path="/signin" element={<SignIn />} />
+              <Route path="/about" element={<About />} />
             </Routes>
           </main>
         </div>
