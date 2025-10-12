@@ -152,27 +152,10 @@ const Navigation = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Navigation Debug:', {
-      directOwnerAddress: ownerAddress,
-      walletStateOwnerAddress: walletStateOwnerAddress,
-      effectiveOwnerAddress: effectiveOwnerAddress,
-      isDisconnected: isDisconnected,
-      isWalletConnected: isWalletConnected,
-      shouldShowPill: shouldShowPill,
-      forceUpdate: forceUpdate,
-      directAccount: account,
-      walletStateAccount: walletStateAccount,
-      effectiveAccount: effectiveAccount,
-      windowWalletDisconnected: window.walletDisconnected
-    });
-  }, [ownerAddress, walletStateOwnerAddress, effectiveOwnerAddress, isDisconnected, isWalletConnected, shouldShowPill, forceUpdate, account, walletStateAccount, effectiveAccount]);
-
   const navItems = [
     { path: '/', name: 'Explore' },
-    { path: '/create', name: 'Create' },
-    { path: '/statistics', name: 'Statistics' },
+    { path: '/create', name: 'Create', requiresWallet: true },
+    { path: '/statistics', name: 'Statistics', requiresWallet: true },
     { path: '/about', name: 'About' }
   ];
 
@@ -226,16 +209,25 @@ const Navigation = () => {
       </div>
       <div className="nav-right">
         <ul className="nav-list">
-          {navItems.map((item) => (
-            <li key={item.path} className="nav-item">
-              <Link
-                to={item.path}
-                className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            const isDisabled = item.requiresWallet && !isWalletConnected;
+            return (
+              <li key={item.path} className="nav-item">
+                {isDisabled ? (
+                  <span className={`nav-link disabled ${location.pathname === item.path ? 'active' : ''}`}>
+                    {item.name}
+                  </span>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                  >
+                    {item.name}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
         </ul>
         {shouldShowPill ? (
           <div className="wallet-status-pill" onClick={handleWalletPillClick} style={{ cursor: 'pointer' }}>

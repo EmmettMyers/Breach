@@ -91,6 +91,18 @@
   font-weight: 700;
 }
 
+.nav-link.disabled {
+  color: var(--color-text-secondary);
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.nav-link.disabled:hover {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
 /* Navigation right side */
 .nav-right {
   display: flex;
