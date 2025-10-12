@@ -124,7 +124,9 @@ const Create = () => {
         prize_value: parseFloat(formData.jailbreakPrize),
         prompt_cost: parseFloat(formData.promptCost),
         username: formData.username || '',
-        model_name: formData.title
+        model_name: formData.title,
+        model_prompt: formData.modelPrompt,
+        model_description: formData.description
       };
 
       // Call the API to create the model account
@@ -244,7 +246,20 @@ const Create = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="description">Description</label>
+          <label htmlFor="username">Creator Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
+            placeholder="Enter your model's creator username"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="description">Model Description</label>
           <textarea
             id="description"
             name="description"
@@ -252,19 +267,6 @@ const Create = () => {
             onChange={handleInputChange}
             placeholder="Describe what your AI model does and its capabilities"
             rows="4"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            placeholder="Enter your username"
             required
           />
         </div>

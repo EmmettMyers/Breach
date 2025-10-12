@@ -86,3 +86,30 @@ export const fetchModels = async () => {
     throw error;
   }
 };
+
+export const sendAgentMessage = async (message, modelAddress, userId, userSmartAddress) => {
+  try {
+    const response = await fetch(`${API_URL}/agent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        model_address: modelAddress,
+        user_id: userId,
+        user_smart_address: userSmartAddress
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to send agent message:', error);
+    throw error;
+  }
+};

@@ -7,7 +7,7 @@ import { erc20Abi } from 'viem';
 import { aiModels } from '../data/mockData';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
-import { fetchModels } from '../utils/apiService';
+import { fetchModels, sendAgentMessage } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
 
@@ -25,7 +25,9 @@ const Chat = () => {
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmountChat, setWithdrawAmountChat] = useState('');
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const transferStatusTimeoutRef = useRef(null);
 
   // Function to set transfer status with auto-dismiss
@@ -61,33 +63,93 @@ const Chat = () => {
       setTransferStatusWithTimeout({ type: 'success', hash: result.transactionHash });
       
       // Generate AI response after successful payment
-      const generateAIResponse = async () => {
+      const generateAIResponse = async (userMessage) => {
         try {
-          // Simulate AI response generation
+          // Use the message content passed to the function
+          const messageContent = userMessage || currentMessage;
+          
+          // Debug logging
+          console.log('Debug - currentMessage:', currentMessage);
+          console.log('Debug - userMessage:', userMessage);
+          console.log('Debug - messageContent:', messageContent);
+          
+          // Validate required parameters
+          if (!messageContent || !messageContent.trim()) {
+            console.error('Message validation failed:', { messageContent, currentMessage, userMessage });
+            throw new Error('Message cannot be empty');
+          }
+          
+          if (!account?.address) {
+            throw new Error('Wallet not connected');
+          }
+          
+          // Call the actual agent API
+          const response = await sendAgentMessage(
+            messageContent,
+            model.model_address || model.id, // Use model_address if available, fallback to id
+            account.address, // Use wallet address as user_id
+            account.address // Use wallet address as smart address
+          );
+          
           const aiResponse = {
             id: Date.now() + 1,
             type: 'ai',
-            content: `Thank you for your payment! I received your message: "${currentMessage}". Here's my response as ${model.title}: I understand you're trying to test my capabilities. I'm designed to be helpful, harmless, and honest. How can I assist you today?`,
-            timestamp: new Date()
+            content: response.response || 'No response received',
+            timestamp: new Date(),
+            calledTools: response.called_tools || null,
+            model: response.model || model.title
           };
           
           setMessages(prev => [...prev, aiResponse]);
+          
+          // Show success message if tools were called (jailbreak successful)
+          if (response.called_tools && response.called_tools.length > 0) {
+            setTransferStatusWithTimeout({ 
+              type: 'success', 
+              message: `Jailbreak successful! Tools called: ${response.called_tools.join(', ')}` 
+            });
+          }
         } catch (error) {
           console.error('Failed to generate AI response:', error);
+          
+          // Determine error type and create appropriate response
+          let errorMessage = 'An unexpected error occurred';
+          let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage || currentMessage}". Please try again.`;
+          
+          if (error.message.includes('HTTP error')) {
+            errorMessage = 'Server error - please try again later';
+            aiResponseContent = `I'm experiencing server issues. Please try again in a moment.`;
+          } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Network error - check your connection';
+            aiResponseContent = `I'm having trouble connecting to the server. Please check your internet connection and try again.`;
+          } else if (error.message.includes('Wallet not connected')) {
+            errorMessage = 'Please connect your wallet first';
+            aiResponseContent = `Please connect your wallet to continue the conversation.`;
+          } else if (error.message.includes('Message cannot be empty')) {
+            errorMessage = 'Please enter a message';
+            aiResponseContent = `Please enter a message to continue.`;
+          }
+          
           // Add a fallback response
           const fallbackResponse = {
             id: Date.now() + 1,
             type: 'ai',
-            content: `Thank you for your payment! I received your message: "${currentMessage}". I'm ${model.title} and I'm here to help you.`,
+            content: aiResponseContent,
             timestamp: new Date()
           };
           setMessages(prev => [...prev, fallbackResponse]);
+          
+          // Show error message
+          setTransferStatusWithTimeout({ 
+            type: 'error', 
+            message: `AI response failed: ${errorMessage}` 
+          });
         } finally {
           setIsLoading(false);
         }
       };
       
-      generateAIResponse();
+      generateAIResponse(currentMessage);
       
       // Refresh SBC balance after successful transfer
       if (account?.address) {
@@ -163,7 +225,8 @@ const Chat = () => {
             promptCost: model.prompt_cost || 0.00,
             prize: model.prize_value || 0,
             attempts: 0,
-            user_id: model.user_id || null
+            user_id: model.user_id || null,
+            model_address: model.model_address || model.wallet_address || null
           }));
 
           const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
@@ -185,10 +248,42 @@ const Chat = () => {
     loadModel();
   }, [modelId, navigate]);
 
+  // Manual scroll function
+  const scrollToBottom = (smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: smooth ? 'smooth' : 'auto',
+        block: 'end',
+        inline: 'nearest'
+      });
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Small delay to ensure DOM is updated
+    setTimeout(() => {
+      scrollToBottom(true);
+    }, 100);
   }, [messages]);
+
+  // Also scroll when loading state changes
+  useEffect(() => {
+    if (isLoading) {
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 100);
+    }
+  }, [isLoading]);
+
+  // Handle scroll detection to show/hide scroll button
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50; // 50px threshold
+      setShowScrollButton(!isAtBottom);
+    }
+  };
 
   // Fetch SBC balance for smart account
   useEffect(() => {
@@ -262,7 +357,7 @@ const Chat = () => {
     if (!withdrawAmountChat || withdrawAmountChat <= 0 || withdrawAmountChat > model.prize) {
       setTransferStatusWithTimeout({ 
         type: 'error', 
-        message: `Please enter a valid withdrawal amount (max: ${model.prize} SBC).` 
+        message: `Please enter a valid withdrawal amount (max: ${Number(model.prize).toFixed(4)} SBC).` 
       });
       return;
     }
@@ -391,7 +486,7 @@ const Chat = () => {
         </div>
         <div className="model-stats">
           <div className="stat">
-            <span className="stat-value">{model.prize}</span>
+            <span className="stat-value">{Number(model.prize).toFixed(4)}</span>
             <span className="stat-label">SBC Prize</span>
           </div>
           <div className="stat">
@@ -442,14 +537,11 @@ const Chat = () => {
       )}
 
       <div className="chat-container">
-        <div className="messages-container">
+        <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
           {messages.map((message) => (
             <div key={message.id} className={`message ${message.type}`}>
               <div className="message-content">
                 {message.content}
-              </div>
-              <div className="message-time">
-                {message.timestamp.toLocaleTimeString()}
               </div>
             </div>
           ))}
@@ -465,6 +557,17 @@ const Chat = () => {
             </div>
           )}
           <div ref={messagesEndRef} />
+          
+          {/* Scroll to bottom button */}
+          {showScrollButton && (
+            <button 
+              className="scroll-to-bottom-button"
+              onClick={() => scrollToBottom(true)}
+              title="Scroll to bottom"
+            >
+              ↓
+            </button>
+          )}
         </div>
 
         {transferStatus && (

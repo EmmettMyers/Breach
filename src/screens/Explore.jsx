@@ -158,7 +158,7 @@ const Explore = () => {
         const mappedModels = apiModels.map((model, index) => ({
           id: model.model_id || model._id || index + 1,
           title: model.model_name || 'Unnamed Model',
-          description: `AI model created by ${model.username || 'Unknown User'}`,
+          description: model.model_description || 'No description available',
           creator: model.username || 'Unknown User',
           aiModel: model.model || 'Unknown AI Model',
           promptCost: model.prompt_cost || 0.00,
