@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShieldAlt, FaCoins, FaGlobe, FaChartBar, FaDatabase, FaUsers } from 'react-icons/fa';
+import { useWalletState } from '../hooks/useWalletState';
 import '../styles/screens/About.css';
 import breachLogoWhite from '../assets/logos/breach_logo_white.png';
 
 const About = () => {
   const navigate = useNavigate();
+  const { account, ownerAddress } = useWalletState();
 
   const handleStartTesting = () => {
     navigate('/');
@@ -13,8 +15,16 @@ const About = () => {
   };
 
   const handleCreateModel = () => {
-    navigate('/create');
-    window.scrollTo(0, 0);
+    // Check if wallet is connected
+    if (!account || !ownerAddress) {
+      // Redirect to sign-in page if wallet is not connected
+      navigate('/signin');
+      window.scrollTo(0, 0);
+    } else {
+      // Navigate to create page if wallet is connected
+      navigate('/create');
+      window.scrollTo(0, 0);
+    }
   };
 
   return (
