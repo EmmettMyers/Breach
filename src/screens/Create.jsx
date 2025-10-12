@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
+import { FiAlertTriangle } from 'react-icons/fi';
 import '../styles/screens/Create.css';
 
 const Create = () => {
@@ -262,7 +263,9 @@ const Create = () => {
 
         {!isWalletConnected && !isSubmitting && !isPaymentLoading && (
           <div className="wallet-warning">
-            <div className="warning-icon">⚠️</div>
+            <div className="warning-icon">
+              <FiAlertTriangle />
+            </div>
             <div className="warning-text">
               <strong>Crypto Wallet Not Connected</strong>
               <p>Please connect your crypto wallet to create AI models.</p>
