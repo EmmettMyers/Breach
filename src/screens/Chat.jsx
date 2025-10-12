@@ -10,6 +10,12 @@ import { fetchModels, sendAgentMessage, fetchMessages } from '../utils/apiServic
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
 
+const modelDisplayMap = {
+  'gpt-4': 'GPT-4',
+  'claude-3': 'Claude 3',
+  'gemini-2.5': 'Gemini 2.5'
+};
+
 const Chat = () => {
   const { modelId } = useParams();
   const navigate = useNavigate();
@@ -226,7 +232,7 @@ const Chat = () => {
             user_id: model.user_id || null,
             model_address: model.model_address || model.wallet_address || null,
             smart_address: model.smartAccount.address || null,
-            jailbroken: false //model.jailbroken || false
+            jailbroken: model.jailbroken || false
           }));
 
           const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
@@ -506,7 +512,7 @@ const Chat = () => {
           <h1 className="model-title">{model.title}</h1>
           <div className="model-meta">
             <span className="creator">{model.creator}</span>
-            <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
+            <span className="ai-model">•&nbsp;&nbsp;{modelDisplayMap[model.aiModel] || model.aiModel}</span>
             {isModelOwner() && (
               <span className="owned-pill">Your Model</span>
             )}

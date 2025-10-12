@@ -119,7 +119,7 @@ const Create = () => {
 
       // Prepare the data for the API call
       const payload = {
-        model: formData.aiModel,
+        model: formData.aiModel.toLowerCase().replace(/\s+/g, '-'),
         user_id: ownerAddress || '',
         prize_value: parseFloat(formData.jailbreakPrize),
         prompt_cost: parseFloat(formData.promptCost),

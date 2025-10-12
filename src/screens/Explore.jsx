@@ -7,6 +7,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import '../styles/screens/Explore.css';
 
+const modelDisplayMap = {
+  'gpt-4': 'GPT-4',
+  'claude-3': 'Claude 3',
+  'gemini-2.5': 'Gemini 2.5'
+};
+
 const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
   if (!isOpen) return null;
 
@@ -125,7 +131,7 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
 
       <div className="model-creator">
         <span className="creator-name">{model.creator}</span>
-        <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
+        <span className="ai-model">•&nbsp;&nbsp;{modelDisplayMap[model.aiModel] || model.aiModel}</span>
       </div>
     </div>
   );
@@ -409,7 +415,7 @@ const Explore = () => {
         >
           <option value="all">All AI Models</option>
           {uniqueModels.map(model => (
-            <option key={model} value={model}>{model}</option>
+            <option key={model} value={model}>{modelDisplayMap[model] || model}</option>
           ))}
         </select>
 
