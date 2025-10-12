@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSbcApp } from '@stablecoin.xyz/react';
 import { HiMenu, HiSearch } from 'react-icons/hi';
-import { aiModels } from '../data/mockData';
 import { fetchModels } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';

@@ -4,7 +4,6 @@ import { useSbcApp, useUserOperation, WalletButton } from '@stablecoin.xyz/react
 import { parseUnits, createPublicClient, http, encodeFunctionData } from 'viem';
 import { base } from 'viem/chains';
 import { erc20Abi } from 'viem';
-import { aiModels } from '../data/mockData';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
 import { fetchModels, sendAgentMessage, fetchMessages } from '../utils/apiService';
@@ -207,16 +206,7 @@ const Chat = () => {
   useEffect(() => {
     const loadModel = async () => {
       try {
-        // First try to find in mock data (for backward compatibility)
-        const mockModel = aiModels.find(m => m.id === parseInt(modelId));
-        if (mockModel) {
-          setModel(mockModel);
-          setIsModelJailbroken(mockModel.jailbroken || false);
-          setMessages([]);
-          return;
-        }
-
-        // If not found in mock data, try API
+        // Fetch models from API
         const apiResponse = await fetchModels();
         const apiModels = Array.isArray(apiResponse) ? apiResponse :
           (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
@@ -247,7 +237,7 @@ const Chat = () => {
           }
         }
 
-        // Model not found in either mock data or API, redirect to explore
+        // Model not found in API, redirect to explore
         navigate('/');
       } catch (error) {
         console.error('Failed to load model:', error);
