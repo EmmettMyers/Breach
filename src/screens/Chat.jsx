@@ -29,6 +29,7 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const transferStatusTimeoutRef = useRef(null);
+  const currentMessageRef = useRef(null);
 
   // Function to set transfer status with auto-dismiss
   const setTransferStatusWithTimeout = (status) => {
@@ -66,16 +67,15 @@ const Chat = () => {
       const generateAIResponse = async (userMessage) => {
         try {
           // Use the message content passed to the function
-          const messageContent = userMessage || currentMessage;
+          const messageContent = userMessage;
           
           // Debug logging
-          console.log('Debug - currentMessage:', currentMessage);
           console.log('Debug - userMessage:', userMessage);
           console.log('Debug - messageContent:', messageContent);
           
           // Validate required parameters
           if (!messageContent || !messageContent.trim()) {
-            console.error('Message validation failed:', { messageContent, currentMessage, userMessage });
+            console.error('Message validation failed:', { messageContent, userMessage });
             throw new Error('Message cannot be empty');
           }
           
@@ -114,7 +114,7 @@ const Chat = () => {
           
           // Determine error type and create appropriate response
           let errorMessage = 'An unexpected error occurred';
-          let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage || currentMessage}". Please try again.`;
+          let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage}". Please try again.`;
           
           if (error.message.includes('HTTP error')) {
             errorMessage = 'Server error - please try again later';
@@ -149,7 +149,7 @@ const Chat = () => {
         }
       };
       
-      generateAIResponse(currentMessage);
+      generateAIResponse(currentMessageRef.current);
       
       // Refresh SBC balance after successful transfer
       if (account?.address) {
@@ -391,6 +391,7 @@ const Chat = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage(inputMessage); // Store the current message for the AI response
+    currentMessageRef.current = inputMessage; // Store in ref for onSuccess callback
     setInputMessage('');
     setIsLoading(true);
     
