@@ -1,0 +1,359 @@
+/* Statistics Screen Styles */
+.statistics-screen {
+  min-height: 100vh;
+  color: var(--color-text-primary);
+  padding: 2rem 0;
+}
+
+.statistics-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Time Range Selector */
+.time-range-selector {
+  margin-bottom: 1.5rem;
+}
+
+.time-range-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.time-range-btn {
+  background: var(--color-button-background);
+  border: 2px solid var(--color-button-border);
+  color: var(--color-text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.time-range-btn:hover {
+  border-color: var(--color-button-hover-border);
+  transform: translateY(-2px);
+}
+
+.time-range-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-background-light);
+  font-weight: 600;
+}
+
+/* Statistics Box */
+.statistics-box {
+  background: var(--color-background-darker);
+  border: 1px solid var(--color-button-border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin: 0.5rem 0 0 0;
+  font-weight: 600;
+}
+
+/* Performance Grid */
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.performance-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+.performance-card:hover {
+  transform: translateY(-2px);
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.performance-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.performance-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #00ff88;
+  margin: 0;
+  line-height: 1;
+}
+
+.performance-label {
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  margin: 0.5rem 0 0 0;
+  font-weight: 600;
+}
+
+/* Model Performance Section */
+.model-performance-section {
+  margin-bottom: 3rem;
+}
+
+.model-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.model-stat-card {
+  border: 1px solid var(--color-button-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.model-stat-card:hover {
+  border-color: var(--color-primary);
+}
+
+.model-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.model-count {
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.model-bar {
+  height: 6px;
+  background: var(--color-button-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.model-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Jailbreaks Section */
+.jailbreaks-section {
+  margin-bottom: 3rem;
+}
+
+.jailbreaks-table-container {
+  background: var(--color-background-darker);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.jailbreaks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.jailbreaks-table thead {
+    background: var(--color-background);
+}
+
+.jailbreaks-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-background-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.jailbreaks-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.jailbreaks-table tbody tr:hover {
+  background: var(--color-nav-hover);
+}
+
+.jailbreaks-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.jailbroken-model-cell {
+  font-weight: 600;
+  max-width: 200px;
+}
+
+.jailbroken-model-name {
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+
+.ai-model-cell {
+  font-weight: 600;
+}
+
+.ai-model-name {
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.prompts-count {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.total-prompts-cell {
+  text-align: left;
+}
+
+.total-prompts-count {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.payout-cell {
+  font-weight: 600;
+  color: #00ff88;
+  text-align: left;
+}
+
+.payout-amount {
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .performance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .statistics-container {
+    padding: 0 1rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .model-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-range-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .time-range-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .jailbreaks-table-container {
+    overflow-x: auto;
+  }
+  
+  .jailbreaks-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statistics-title {
+    font-size: 1.5rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .performance-value {
+    font-size: 1.5rem;
+  }
+  
+  .jailbreaks-table th,
+  .jailbreaks-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+}

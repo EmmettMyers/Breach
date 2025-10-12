@@ -141,3 +141,115 @@ export const aiModels = [
     attempts: 25
   }
 ];
+
+// Statistics data for the statistics page
+export const statisticsData = {
+  timeRanges: [
+    { label: 'Last 24 Hours', value: '24h' },
+    { label: 'Last 7 Days', value: '7d' },
+    { label: 'Last 30 Days', value: '30d' },
+    { label: 'Last 90 Days', value: '90d' },
+    { label: 'All Time', value: 'all' }
+  ],
+  
+  // Mock statistics data for different time ranges
+  stats: {
+    '24h': {
+      totalPrompts: 8,
+      totalSbcSpent: 0.24,
+      successfulJailbreaks: [
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 15, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 8, promptsTaken: 2, totalPrompts: 5 }
+      ]
+    },
+    '7d': {
+      totalPrompts: 23,
+      totalSbcSpent: 0.69,
+      successfulJailbreaks: [
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 15, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 8, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 12, promptsTaken: 4, totalPrompts: 7 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 6, promptsTaken: 1, totalPrompts: 3 }
+      ]
+    },
+    '30d': {
+      totalPrompts: 67,
+      totalSbcSpent: 2.01,
+      successfulJailbreaks: [
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 15, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 8, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 12, promptsTaken: 4, totalPrompts: 7 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 6, promptsTaken: 1, totalPrompts: 3 },
+        { jailbrokenModel: 'LegalEase Assistant', aiModel: 'Mistral Large', payout: 9, promptsTaken: 3, totalPrompts: 6 },
+        { jailbrokenModel: 'RetailBot Manager', aiModel: 'Command R+', payout: 4, promptsTaken: 1, totalPrompts: 2 },
+        { jailbrokenModel: 'CodeReview Assistant', aiModel: 'GPT-4', payout: 22, promptsTaken: 5, totalPrompts: 12 },
+        { jailbrokenModel: 'TravelPlanner Pro', aiModel: 'Claude 3', payout: 11, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'ContentModerator AI', aiModel: 'Gemini Pro', payout: 18, promptsTaken: 6, totalPrompts: 10 },
+        { jailbrokenModel: 'SupplyChain Optimizer', aiModel: 'Llama 3', payout: 7, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'PersonalTrainer AI', aiModel: 'Mistral Large', payout: 13, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'AgriGrow Assistant', aiModel: 'GPT-4', payout: 20, promptsTaken: 5, totalPrompts: 11 }
+      ]
+    },
+    '90d': {
+      totalPrompts: 156,
+      totalSbcSpent: 4.68,
+      successfulJailbreaks: [
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 15, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 8, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 12, promptsTaken: 4, totalPrompts: 7 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 6, promptsTaken: 1, totalPrompts: 3 },
+        { jailbrokenModel: 'LegalEase Assistant', aiModel: 'Mistral Large', payout: 9, promptsTaken: 3, totalPrompts: 6 },
+        { jailbrokenModel: 'RetailBot Manager', aiModel: 'Command R+', payout: 4, promptsTaken: 1, totalPrompts: 2 },
+        { jailbrokenModel: 'CodeReview Assistant', aiModel: 'GPT-4', payout: 22, promptsTaken: 5, totalPrompts: 12 },
+        { jailbrokenModel: 'TravelPlanner Pro', aiModel: 'Claude 3', payout: 11, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'ContentModerator AI', aiModel: 'Gemini Pro', payout: 18, promptsTaken: 6, totalPrompts: 10 },
+        { jailbrokenModel: 'SupplyChain Optimizer', aiModel: 'Llama 3', payout: 7, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'PersonalTrainer AI', aiModel: 'Mistral Large', payout: 13, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'AgriGrow Assistant', aiModel: 'GPT-4', payout: 20, promptsTaken: 5, totalPrompts: 11 },
+        { jailbrokenModel: 'RealEstate Analyzer', aiModel: 'Claude 3', payout: 16, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'CyberGuard Security', aiModel: 'Gemini Pro', payout: 25, promptsTaken: 8, totalPrompts: 15 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 8, promptsTaken: 2, totalPrompts: 4 },
+        { jailbrokenModel: 'LegalEase Assistant', aiModel: 'Mistral Large', payout: 9, promptsTaken: 3, totalPrompts: 7 },
+        { jailbrokenModel: 'RetailBot Manager', aiModel: 'Command R+', payout: 5, promptsTaken: 1, totalPrompts: 3 },
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 17, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 14, promptsTaken: 3, totalPrompts: 7 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 19, promptsTaken: 5, totalPrompts: 8 }
+      ]
+    },
+    'all': {
+      totalPrompts: 234,
+      totalSbcSpent: 7.02,
+      successfulJailbreaks: [
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 15, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 8, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 12, promptsTaken: 4, totalPrompts: 7 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 6, promptsTaken: 1, totalPrompts: 3 },
+        { jailbrokenModel: 'LegalEase Assistant', aiModel: 'Mistral Large', payout: 9, promptsTaken: 3, totalPrompts: 6 },
+        { jailbrokenModel: 'RetailBot Manager', aiModel: 'Command R+', payout: 4, promptsTaken: 1, totalPrompts: 2 },
+        { jailbrokenModel: 'CodeReview Assistant', aiModel: 'GPT-4', payout: 22, promptsTaken: 5, totalPrompts: 12 },
+        { jailbrokenModel: 'TravelPlanner Pro', aiModel: 'Claude 3', payout: 11, promptsTaken: 3, totalPrompts: 8 },
+        { jailbrokenModel: 'ContentModerator AI', aiModel: 'Gemini Pro', payout: 18, promptsTaken: 6, totalPrompts: 10 },
+        { jailbrokenModel: 'SupplyChain Optimizer', aiModel: 'Llama 3', payout: 7, promptsTaken: 2, totalPrompts: 5 },
+        { jailbrokenModel: 'PersonalTrainer AI', aiModel: 'Mistral Large', payout: 13, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'AgriGrow Assistant', aiModel: 'GPT-4', payout: 20, promptsTaken: 5, totalPrompts: 11 },
+        { jailbrokenModel: 'RealEstate Analyzer', aiModel: 'Claude 3', payout: 16, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'CyberGuard Security', aiModel: 'Gemini Pro', payout: 25, promptsTaken: 8, totalPrompts: 15 },
+        { jailbrokenModel: 'FinanceBot Advisor', aiModel: 'Llama 3', payout: 8, promptsTaken: 2, totalPrompts: 4 },
+        { jailbrokenModel: 'LegalEase Assistant', aiModel: 'Mistral Large', payout: 9, promptsTaken: 3, totalPrompts: 7 },
+        { jailbrokenModel: 'RetailBot Manager', aiModel: 'Command R+', payout: 5, promptsTaken: 1, totalPrompts: 3 },
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'GPT-4', payout: 17, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'MedAssist AI', aiModel: 'Claude 3', payout: 14, promptsTaken: 3, totalPrompts: 7 },
+        { jailbrokenModel: 'EduTutor Pro', aiModel: 'Gemini Pro', payout: 19, promptsTaken: 5, totalPrompts: 8 },
+        { jailbrokenModel: 'CodeReview Assistant', aiModel: 'GPT-4', payout: 28, promptsTaken: 6, totalPrompts: 14 },
+        { jailbrokenModel: 'TravelPlanner Pro', aiModel: 'Claude 3', payout: 19, promptsTaken: 5, totalPrompts: 10 },
+        { jailbrokenModel: 'ContentModerator AI', aiModel: 'Gemini Pro', payout: 31, promptsTaken: 9, totalPrompts: 16 },
+        { jailbrokenModel: 'SupplyChain Optimizer', aiModel: 'Llama 3', payout: 12, promptsTaken: 3, totalPrompts: 7 },
+        { jailbrokenModel: 'PersonalTrainer AI', aiModel: 'Mistral Large', payout: 21, promptsTaken: 6, totalPrompts: 12 },
+        { jailbrokenModel: 'AgriGrow Assistant', aiModel: 'Command R+', payout: 9, promptsTaken: 2, totalPrompts: 4 },
+        { jailbrokenModel: 'RealEstate Analyzer', aiModel: 'GPT-4', payout: 24, promptsTaken: 5, totalPrompts: 11 },
+        { jailbrokenModel: 'CyberGuard Security', aiModel: 'Claude 3', payout: 18, promptsTaken: 4, totalPrompts: 9 },
+        { jailbrokenModel: 'AutoService Pro', aiModel: 'Gemini Pro', payout: 26, promptsTaken: 7, totalPrompts: 13 }
+      ]
+    }
+  }
+};
