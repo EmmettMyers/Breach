@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
+import { createModelAccount } from '../utils/apiService';
 import { FiAlertTriangle } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
+import { erc20Abi } from 'viem';
 import '../styles/screens/Create.css';
 
 const Create = () => {
@@ -14,22 +17,50 @@ const Create = () => {
     aiModel: '',
     modelPrompt: '',
     promptCost: '',
-    jailbreakPrize: ''
+    jailbreakPrize: '',
+    username: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [sbcBalance, setSbcBalance] = useState(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const submitMessageTimeoutRef = useRef(null);
 
   // Available AI models from the mock data
   const aiModelOptions = [
     'GPT-4',
     'Claude 3',
-    'Gemini Pro',
-    'Llama 3',
-    'Mistral Large',
-    'Command R+'
+    'Gemini 2.5'
   ];
+
+  // Function to fetch SBC balance
+  const fetchSbcBalance = async () => {
+    if (!account?.address) return;
+
+    setIsLoadingBalance(true);
+    try {
+      const balance = await publicClient.readContract({
+        address: SBC_TOKEN_ADDRESS(chain),
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [account.address],
+      });
+      setSbcBalance(balance.toString());
+    } catch (error) {
+      console.error('Failed to fetch SBC balance:', error);
+      setSbcBalance('0');
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  // Fetch balance when account changes
+  useEffect(() => {
+    if (account?.address) {
+      fetchSbcBalance();
+    }
+  }, [account?.address]);
 
   // Function to set submit message with auto-dismiss
   const setSubmitMessageWithTimeout = (message) => {
@@ -71,22 +102,51 @@ const Create = () => {
     setSubmitMessage('');
 
     try {
-      // First, transfer the jailbreak prize payment
+      // Check if user has sufficient SBC balance
+      if (sbcBalance) {
+        const requiredAmount = parseFloat(formData.jailbreakPrize);
+        const currentBalance = parseFloat(sbcBalance) / Math.pow(10, SBC_DECIMALS(chain));
+
+        if (currentBalance < requiredAmount) {
+          setSubmitMessageWithTimeout(`Insufficient SBC balance. You have ${currentBalance.toFixed(4)} SBC but need ${requiredAmount} SBC.`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // First, create the model via API call
+      setSubmitMessageWithTimeout('Creating model...');
+
+      // Prepare the data for the API call
+      const payload = {
+        model: formData.aiModel,
+        user_id: ownerAddress || '',
+        prize_value: parseFloat(formData.jailbreakPrize),
+        prompt_cost: parseFloat(formData.promptCost),
+        username: formData.username || '',
+        model_name: formData.title
+      };
+
+      // Call the API to create the model account
+      const response = await createModelAccount(payload);
+      console.log('Model created successfully:', response);
+
+      setSubmitMessageWithTimeout('Model created successfully! Processing payment...');
+
+      // Now proceed with payment after successful model creation
       if (account) {
-        setSubmitMessageWithTimeout('Processing jailbreak prize payment...');
-        
         await sendSBCTransfer({
           account,
           sendUserOperation,
-          recipientAddress: '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0', // Same recipient as chat payments
+          recipientAddress: response.smart_account.address, // Use the smart account address from the API response
           amount: formData.jailbreakPrize.toString()
         });
       } else {
         throw new Error('Smart account not available for payment');
       }
     } catch (error) {
-      console.error('Payment failed:', error);
-      setSubmitMessageWithTimeout(`Payment failed: ${error.message}. Model creation cancelled.`);
+      console.error('Model creation or payment failed:', error);
+      setSubmitMessageWithTimeout(`Error: ${error.message}. Please try again.`);
       setIsSubmitting(false);
       return;
     }
@@ -95,42 +155,39 @@ const Create = () => {
   // Handle successful payment
   useEffect(() => {
     if (isPaymentSuccess && isSubmitting) {
-      setSubmitMessageWithTimeout('Payment successful! Creating model...');
-      
-      // Proceed with API call after successful payment
-      const createModel = async () => {
-        try {
-          // Mock API call - simulate network delay
-          await new Promise(resolve => setTimeout(resolve, 2000));
+      setSubmitMessageWithTimeout('Payment successful! Your AI model is now available for jailbreaking.');
 
-          // Mock successful submission
-          console.log('Form submitted:', formData);
-          setSubmitMessageWithTimeout('Model created successfully! Your AI model is now available for jailbreaking.');
+      // Refresh SBC balance after successful payment
+      fetchSbcBalance();
 
-          // Reset form
-          setFormData({
-            title: '',
-            description: '',
-            aiModel: '',
-            modelPrompt: '',
-            promptCost: '',
-            jailbreakPrize: ''
-          });
-        } catch (error) {
-          setSubmitMessageWithTimeout('Error creating model. Please try again.');
-        } finally {
-          setIsSubmitting(false);
+      // Trigger navigation balance update
+      const balanceUpdateEvent = new CustomEvent('sbcBalanceUpdated', {
+        detail: {
+          balance: sbcBalance,
+          formattedBalance: sbcBalance ? (parseFloat(sbcBalance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4) : '0.0000'
         }
-      };
-      
-      createModel();
+      });
+      window.dispatchEvent(balanceUpdateEvent);
+
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        aiModel: '',
+        modelPrompt: '',
+        promptCost: '',
+        jailbreakPrize: '',
+        username: ''
+      });
+
+      setIsSubmitting(false);
     }
-  }, [isPaymentSuccess, isSubmitting, formData]);
+  }, [isPaymentSuccess, isSubmitting, sbcBalance]);
 
   // Handle payment error
   useEffect(() => {
     if (paymentError && isSubmitting) {
-      setSubmitMessageWithTimeout(`Payment failed: ${paymentError.message}. Model creation cancelled.`);
+      setSubmitMessageWithTimeout(`Payment failed: ${paymentError.message}. Model was created but payment failed. Please contact support.`);
       setIsSubmitting(false);
     }
   }, [paymentError, isSubmitting]);
@@ -144,18 +201,26 @@ const Create = () => {
     };
   }, []);
 
-  const isFormValid = formData.title && formData.description && formData.aiModel &&
+  // Check if user has sufficient balance
+  const hasSufficientBalance = () => {
+    if (!sbcBalance || isLoadingBalance) return true; // Allow submission if balance is loading
+    const requiredAmount = parseFloat(formData.jailbreakPrize);
+    const currentBalance = parseFloat(sbcBalance) / Math.pow(10, SBC_DECIMALS(chain));
+    return currentBalance >= requiredAmount;
+  };
+
+  const isFormValid = formData.title && formData.description && formData.username && formData.aiModel &&
     formData.modelPrompt && formData.promptCost && formData.jailbreakPrize &&
     parseFloat(formData.promptCost) >= 0.0001 && parseFloat(formData.jailbreakPrize) >= 0.01;
 
   const isWalletConnected = ownerAddress && account;
-  const canSubmit = isFormValid && isWalletConnected && !isSubmitting && !isPaymentLoading;
+  const canSubmit = isFormValid && isWalletConnected && !isSubmitting && !isPaymentLoading && hasSufficientBalance();
 
   // Show loading state while smart account is initializing
   if (ownerAddress && !account && isLoadingAccount) {
     return (
       <div className="create-screen">
-        <LoadingSpinner 
+        <LoadingSpinner
           fullScreen={true}
         />
       </div>
@@ -187,6 +252,19 @@ const Create = () => {
             onChange={handleInputChange}
             placeholder="Describe what your AI model does and its capabilities"
             rows="4"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
+            placeholder="Enter your username"
             required
           />
         </div>
@@ -283,7 +361,8 @@ const Create = () => {
           className={`submit-button ${isSubmitting ? 'submitting' : ''}`}
           disabled={!canSubmit}
         >
-          {isPaymentLoading ? 'Processing Payment...' : isSubmitting ? 'Creating Model...' : 'Create Model'}
+          {isPaymentLoading ? 'Processing Payment...' : isSubmitting ? 'Creating Model...' :
+            !hasSufficientBalance() && formData.jailbreakPrize ? 'Insufficient SBC Balance' : 'Create Model'}
         </button>
       </form>
     </div>

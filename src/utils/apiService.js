@@ -42,3 +42,25 @@ export const fetchModelStats = async (userId) => {
     throw error;
   }
 };
+
+export const createModelAccount = async (payload) => {
+  try {
+    const response = await fetch(`${API_URL}/crypto/create_model_account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to create model account:', error);
+    throw error;
+  }
+};
