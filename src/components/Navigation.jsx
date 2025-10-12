@@ -202,12 +202,12 @@ const Navigation = () => {
 
   // Format SBC balance
   const formatSbcBalance = (balance) => {
-    if (!balance) return '0';
+    if (!balance) return '0.0000';
     try {
-      const formatted = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(1);
-      return parseFloat(formatted).toString(); // Remove trailing zeros
+      const formatted = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
+      return formatted; // Keep four decimal places
     } catch {
-      return '0';
+      return '0.0000';
     }
   };
 

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { useSbcApp } from '@stablecoin.xyz/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
+import { sendSBCTransfer } from '../utils/sbcTransfer';
 import '../styles/screens/Create.css';
 
 const Create = () => {
   const { account, ownerAddress, isLoadingAccount } = useSbcApp();
+  const { sendUserOperation, isLoading: isPaymentLoading, isSuccess: isPaymentSuccess, error: paymentError } = useUserOperation();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -15,6 +17,7 @@ const Create = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const submitMessageTimeoutRef = useRef(null);
 
   // Available AI models from the mock data
   const aiModelOptions = [
@@ -25,6 +28,32 @@ const Create = () => {
     'Mistral Large',
     'Command R+'
   ];
+
+  // Function to set submit message with auto-dismiss
+  const setSubmitMessageWithTimeout = (message) => {
+    setSubmitMessage(message);
+
+    // Clear existing timeout
+    if (submitMessageTimeoutRef.current) {
+      clearTimeout(submitMessageTimeoutRef.current);
+    }
+
+    // Set new timeout to fade out and clear message after 3 seconds
+    submitMessageTimeoutRef.current = setTimeout(() => {
+      // Add fade-out class for smooth transition
+      const messageElement = document.querySelector('.submit-message');
+      if (messageElement) {
+        messageElement.classList.add('fade-out');
+        // Remove element after fade animation completes
+        setTimeout(() => {
+          setSubmitMessage('');
+        }, 150); // Match the CSS transition duration
+      } else {
+        setSubmitMessage('');
+      }
+    }, 6000);
+  };
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,34 +69,98 @@ const Create = () => {
     setSubmitMessage('');
 
     try {
-      // Mock API call - simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful submission
-      console.log('Form submitted:', formData);
-      setSubmitMessage('Model created successfully! Your AI model is now available for jailbreaking.');
-      
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        aiModel: '',
-        modelPrompt: '',
-        promptCost: '',
-        jailbreakPrize: ''
-      });
+      // First, transfer the jailbreak prize payment
+      if (account) {
+        setSubmitMessageWithTimeout('Processing jailbreak prize payment...');
+        
+        await sendSBCTransfer({
+          account,
+          sendUserOperation,
+          recipientAddress: '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0', // Same recipient as chat payments
+          amount: formData.jailbreakPrize.toString()
+        });
+      } else {
+        throw new Error('Smart account not available for payment');
+      }
     } catch (error) {
-      setSubmitMessage('Error creating model. Please try again.');
-    } finally {
+      console.error('Payment failed:', error);
+      setSubmitMessageWithTimeout(`Payment failed: ${error.message}. Model creation cancelled.`);
       setIsSubmitting(false);
+      return;
     }
   };
 
-  const isFormValid = formData.title && formData.description && formData.aiModel && 
-                     formData.modelPrompt && formData.promptCost && formData.jailbreakPrize;
-  
+  // Handle successful payment
+  useEffect(() => {
+    if (isPaymentSuccess && isSubmitting) {
+      setSubmitMessageWithTimeout('Payment successful! Creating model...');
+      
+      // Proceed with API call after successful payment
+      const createModel = async () => {
+        try {
+          // Mock API call - simulate network delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Mock successful submission
+          console.log('Form submitted:', formData);
+          setSubmitMessageWithTimeout('Model created successfully! Your AI model is now available for jailbreaking.');
+
+          // Reset form
+          setFormData({
+            title: '',
+            description: '',
+            aiModel: '',
+            modelPrompt: '',
+            promptCost: '',
+            jailbreakPrize: ''
+          });
+        } catch (error) {
+          setSubmitMessageWithTimeout('Error creating model. Please try again.');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+      
+      createModel();
+    }
+  }, [isPaymentSuccess, isSubmitting, formData]);
+
+  // Handle payment error
+  useEffect(() => {
+    if (paymentError && isSubmitting) {
+      setSubmitMessageWithTimeout(`Payment failed: ${paymentError.message}. Model creation cancelled.`);
+      setIsSubmitting(false);
+    }
+  }, [paymentError, isSubmitting]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (submitMessageTimeoutRef.current) {
+        clearTimeout(submitMessageTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const isFormValid = formData.title && formData.description && formData.aiModel &&
+    formData.modelPrompt && formData.promptCost && formData.jailbreakPrize &&
+    parseFloat(formData.promptCost) >= 0.0001 && parseFloat(formData.jailbreakPrize) >= 0.01;
+
   const isWalletConnected = ownerAddress && account;
-  const canSubmit = isFormValid && isWalletConnected && !isSubmitting;
+  const canSubmit = isFormValid && isWalletConnected && !isSubmitting && !isPaymentLoading;
+
+  // Show loading state while smart account is initializing
+  if (ownerAddress && !account && isLoadingAccount) {
+    return (
+      <div className="create-screen">
+        <div className="loading-spinner-container">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="create-screen">
@@ -136,11 +229,15 @@ const Create = () => {
               name="promptCost"
               value={formData.promptCost}
               onChange={handleInputChange}
-              placeholder="0.01"
-              step="0.001"
-              min="0"
+              placeholder="0.0001"
+              step="0.0001"
+              min="0.0001"
               required
+              className={formData.promptCost && parseFloat(formData.promptCost) < 0.0001 ? 'error' : ''}
             />
+            {formData.promptCost && parseFloat(formData.promptCost) < 0.0001 && (
+              <span className="error-text">Minimum prompt cost is 0.0001 SBC</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -151,15 +248,19 @@ const Create = () => {
               name="jailbreakPrize"
               value={formData.jailbreakPrize}
               onChange={handleInputChange}
-              placeholder="100"
-              step="1"
-              min="1"
+              placeholder="0.01"
+              step="0.01"
+              min="0.01"
               required
+              className={formData.jailbreakPrize && parseFloat(formData.jailbreakPrize) < 0.01 ? 'error' : ''}
             />
+            {formData.jailbreakPrize && parseFloat(formData.jailbreakPrize) < 0.01 && (
+              <span className="error-text">Minimum jailbreak prize is 0.01 SBC</span>
+            )}
           </div>
         </div>
 
-        {!isWalletConnected && (
+        {!isWalletConnected && !isSubmitting && !isPaymentLoading && (
           <div className="wallet-warning">
             <div className="warning-icon">⚠️</div>
             <div className="warning-text">
@@ -175,12 +276,12 @@ const Create = () => {
           </div>
         )}
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className={`submit-button ${isSubmitting ? 'submitting' : ''}`}
           disabled={!canSubmit}
         >
-          {isSubmitting ? 'Creating Model...' : 'Create Model'}
+          {isPaymentLoading ? 'Processing Payment...' : isSubmitting ? 'Creating Model...' : 'Create Model'}
         </button>
       </form>
     </div>
