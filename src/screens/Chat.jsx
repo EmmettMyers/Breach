@@ -646,7 +646,7 @@ const Chat = () => {
             </button>
           </div>
           <div className="cost-info">
-            Cost: {model.promptCost} SBC per prompt
+            Cost: {parseFloat(model.promptCost).toFixed(4)} SBC per prompt
             {account && (
               <span className="account-balance">
                 &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}

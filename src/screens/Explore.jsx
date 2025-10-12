@@ -98,7 +98,7 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
 
       <div className="jailbreak-badges">
         <span className="prize">{parseFloat(model.prize).toFixed(4)} SBC Prize</span>
-        <span className="prompt-cost">{model.promptCost} SBC/prompt</span>
+        <span className="prompt-cost">{parseFloat(model.promptCost).toFixed(4)} SBC/prompt</span>
         <span className="attempts">{model.attempts} attempts</span>
       </div>
 
