@@ -41,8 +41,7 @@ const Statistics = () => {
   if (isLoading || !account?.address) {
     return (
       <div className="statistics-screen">
-        <LoadingSpinner 
-          message={!account?.address ? "Connecting wallet..." : "Loading statistics..."}
+        <LoadingSpinner
           fullScreen={true}
         />
       </div>

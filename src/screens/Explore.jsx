@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSbcApp } from '@stablecoin.xyz/react';
 import { aiModels } from '../data/mockData';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Explore.css';
 
 const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
@@ -31,15 +32,15 @@ const ModelCard = ({ model, onModelClick }) => {
       <div className="model-header">
         <h3 className="model-title">{model.title}</h3>
       </div>
-      
+
       <div className="jailbreak-badges">
         <span className="prize">{model.prize} SBC Prize</span>
         <span className="prompt-cost">{model.promptCost} SBC/prompt</span>
         <span className="attempts">{model.attempts} attempts</span>
       </div>
-      
+
       <p className="model-description">{model.description}</p>
-      
+
       <div className="model-creator">
         <span className="creator-name">{model.creator}</span>
         <span className="ai-model">•&nbsp;&nbsp;{model.aiModel}</span>
@@ -64,16 +65,16 @@ const Explore = () => {
   const filteredAndSortedModels = useMemo(() => {
     let filtered = aiModels.filter(model => {
       const matchesSearch = model.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           model.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           model.creator.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        model.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        model.creator.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesModel = selectedModel === 'all' || model.aiModel === selectedModel;
-      
-      const matchesPrize = selectedPrizeRange === 'all' || 
+
+      const matchesPrize = selectedPrizeRange === 'all' ||
         (selectedPrizeRange === 'low' && model.prize <= 50) ||
         (selectedPrizeRange === 'medium' && model.prize > 50 && model.prize <= 150) ||
         (selectedPrizeRange === 'high' && model.prize > 150);
-      
+
       return matchesSearch && matchesModel && matchesPrize;
     });
 
@@ -112,7 +113,7 @@ const Explore = () => {
       });
       return;
     }
-    
+
     // If wallet is connected but account is still loading, show a different message
     if (ownerAddress && !account && isLoadingAccount) {
       setPopup({
@@ -123,7 +124,7 @@ const Explore = () => {
       });
       return;
     }
-    
+
     navigate(`/chat/${modelId}`);
   };
 
@@ -141,7 +142,7 @@ const Explore = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
-        
+
         <select
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
@@ -152,7 +153,7 @@ const Explore = () => {
             <option key={model} value={model}>{model}</option>
           ))}
         </select>
-        
+
         <select
           value={selectedPrizeRange}
           onChange={(e) => setSelectedPrizeRange(e.target.value)}
@@ -163,7 +164,7 @@ const Explore = () => {
           <option value="medium">51 - 150 SBC</option>
           <option value="high">150+ SBC</option>
         </select>
-        
+
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
@@ -178,25 +179,24 @@ const Explore = () => {
           <option value="attempts-low">Attempts (Low to High)</option>
         </select>
       </div>
-      
+
       <div className="models-grid">
         {ownerAddress && !account && isLoadingAccount ? (
-          <div className="loading-spinner-container">
-            <div className="loading-spinner">
-              <div className="spinner"></div>
-            </div>
-          </div>
+          <LoadingSpinner
+            size="large"
+            className="explore-loading-spinner"
+          />
         ) : (
           filteredAndSortedModels.map((model) => (
-            <ModelCard 
-              key={model.id} 
-              model={model} 
+            <ModelCard
+              key={model.id}
+              model={model}
               onModelClick={handleModelClick}
             />
           ))
         )}
       </div>
-      
+
       <Popup
         isOpen={popup.isOpen}
         onClose={closePopup}

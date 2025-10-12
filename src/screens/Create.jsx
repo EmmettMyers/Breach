@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
 import { FiAlertTriangle } from 'react-icons/fi';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Create.css';
 
 const Create = () => {
@@ -154,11 +155,9 @@ const Create = () => {
   if (ownerAddress && !account && isLoadingAccount) {
     return (
       <div className="create-screen">
-        <div className="loading-spinner-container">
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-          </div>
-        </div>
+        <LoadingSpinner 
+          fullScreen={true}
+        />
       </div>
     );
   }
