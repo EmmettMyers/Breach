@@ -212,7 +212,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="navigation">
+    <nav className={`navigation ${location.pathname === '/signin' ? 'signin-page' : ''}`}>
       <div className="nav-brand">
         <Link to="/about" className="nav-logo">
           <img src="/src/assets/logos/breach_logo_white.png" alt="Breach Logo" className="logo-img" />
