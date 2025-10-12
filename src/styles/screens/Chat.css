@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--color-background);
+  background: transparent;
   color: var(--color-text-primary);
   overflow: hidden;
   position: fixed;
@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  background: var(--color-background-darker);
+  background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   margin-top: 60px;
@@ -272,7 +272,7 @@
 
 .input-container {
   padding: 1rem 4rem 1rem 4rem;
-  background: var(--color-background-darker);
+  background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   position: sticky;

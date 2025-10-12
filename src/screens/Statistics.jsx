@@ -4,10 +4,16 @@ import '../styles/screens/Statistics.css';
 
 const Statistics = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
+  const [currentPage, setCurrentPage] = useState(1);
   const currentStats = statisticsData.stats[selectedTimeRange];
 
   const handleTimeRangeChange = (timeRange) => {
     setSelectedTimeRange(timeRange);
+    setCurrentPage(1); // Reset to first page when changing time range
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const calculateTotalPayout = (jailbreaks) => {
@@ -31,6 +37,14 @@ const Statistics = () => {
   const modelStats = getModelStats(currentStats.successfulJailbreaks);
   const totalPayout = calculateTotalPayout(currentStats.successfulJailbreaks);
   const averagePrompts = calculateAveragePromptsPerJailbreak(currentStats.successfulJailbreaks);
+
+  // Pagination logic
+  const modelsPerPage = 10;
+  const totalModels = currentStats.successfulJailbreaks.length;
+  const totalPages = Math.ceil(totalModels / modelsPerPage);
+  const startIndex = (currentPage - 1) * modelsPerPage;
+  const endIndex = startIndex + modelsPerPage;
+  const paginatedJailbreaks = currentStats.successfulJailbreaks.slice(startIndex, endIndex);
 
   return (
     <div className="statistics-screen">
@@ -137,8 +151,8 @@ const Statistics = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentStats.successfulJailbreaks.map((jailbreak, index) => (
-                  <tr key={index}>
+                {paginatedJailbreaks.map((jailbreak, index) => (
+                  <tr key={startIndex + index}>
                     <td className="jailbroken-model-cell">
                       <span className="jailbroken-model-name">{jailbreak.jailbrokenModel}</span>
                     </td>
@@ -159,6 +173,44 @@ const Statistics = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <div className="pagination-info">
+                Showing {startIndex + 1}-{Math.min(endIndex, totalModels)} of {totalModels} models
+              </div>
+              <div className="pagination-buttons">
+                <button
+                  className="pagination-btn"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                
+                <div className="page-numbers">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                
+                <button
+                  className="pagination-btn"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
