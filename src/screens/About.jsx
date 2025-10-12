@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShieldAlt, FaCoins, FaGlobe, FaChartBar, FaDatabase, FaUsers } from 'react-icons/fa';
 import '../styles/screens/About.css';
+import breachLogoWhite from '../assets/logos/breach_logo_white.png';
 
 const About = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const About = () => {
       <section className="about-section cta-section">
         <div className="section-content">
           <h2 className="section-title">
-            What is <img src="/src/assets/logos/breach_logo_white.png" alt="Breach" className="breach-logo-inline" />?
+            What is <img src={breachLogoWhite} alt="Breach" className="breach-logo-inline" />?
           </h2>
           <p className="section-description">
             Breach is a platform that connects AI model creators with security testers 

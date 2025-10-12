@@ -5,6 +5,7 @@ import { erc20Abi } from 'viem';
 import { useWalletState } from '../hooks/useWalletState';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import '../styles/components/navigation.css';
+import breachLogoWhite from '../assets/logos/breach_logo_white.png';
 
 const Navigation = () => {
   const location = useLocation();
@@ -215,7 +216,7 @@ const Navigation = () => {
     <nav className={`navigation ${location.pathname === '/signin' ? 'signin-page' : ''}`}>
       <div className="nav-brand">
         <Link to="/about" className="nav-logo">
-          <img src="/src/assets/logos/breach_logo_white.png" alt="Breach Logo" className="logo-img" />
+          <img src={breachLogoWhite} alt="Breach Logo" className="logo-img" />
         </Link>
       </div>
       <div className="nav-right">
