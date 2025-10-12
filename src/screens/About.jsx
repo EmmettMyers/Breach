@@ -26,7 +26,7 @@ const About = () => {
             What is <img src="/src/assets/logos/breach_logo_white.png" alt="Breach" className="breach-logo-inline" />?
           </h2>
           <p className="section-description">
-            Breach is a revolutionary platform that connects AI model creators with security researchers 
+            Breach is a platform that connects AI model creators with security testers 
             to identify vulnerabilities through controlled jailbreaking attempts. Our platform creates 
             a sustainable ecosystem where model safety is tested through real-world adversarial scenarios, 
             while providing economic incentives for both creators and testers.
@@ -50,7 +50,7 @@ const About = () => {
               <div className="step-number">2</div>
               <h3 className="step-title">Test & Jailbreak</h3>
               <p className="step-description">
-                Security researchers attempt to jailbreak models through various prompts, paying a small fee per attempt.
+                Security testers attempt to jailbreak models through various prompts, paying a small fee per attempt.
               </p>
             </div>
             <div className="workflow-step">
@@ -84,7 +84,7 @@ const About = () => {
               </div>
               <h3 className="feature-title">Economic Incentives</h3>
               <p className="feature-description">
-                Sustainable reward system using stablecoins to incentivize both model creators and security researchers.
+                Sustainable reward system using stablecoins to incentivize both model creators and security testers.
               </p>
             </div>
             <div className="feature-card">
