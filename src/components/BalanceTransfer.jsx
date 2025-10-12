@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { getAddress, parseSignature, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
+import { FaCheckCircle, FaExclamationCircle, FaSpinner } from 'react-icons/fa';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 
 // ERC-20 Permit ABI
@@ -137,7 +138,7 @@ async function getPermitSignature({
 }
 
 function BalanceTransfer() {
-  const { account, ownerAddress, sbcAppKit } = useSbcApp();
+  const { account, ownerAddress, sbcAppKit, refreshAccount } = useSbcApp();
   const { sendUserOperation, isLoading, isSuccess, isError, error: opError, data } = useUserOperation();
   const [amount, setAmount] = useState('');
   const [walletBalance, setWalletBalance] = useState(null);
@@ -306,6 +307,37 @@ function BalanceTransfer() {
     }
   };
 
+  // Refresh smart account balance
+  const refreshSmartAccountBalance = useCallback(async () => {
+    try {
+      // First refresh the account data (same as refresh button)
+      await refreshAccount?.();
+      
+      // Then fetch and update the SBC balance
+      if (account?.address) {
+        const balance = await publicClient.readContract({
+          address: SBC_TOKEN_ADDRESS(chain),
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address],
+        });
+        
+        // Dispatch custom event to notify other components of balance update
+        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
+          detail: { 
+            balance: balance.toString(),
+            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
+          } 
+        }));
+        
+        // Dispatch custom event to trigger UI refresh in smart account components
+        window.dispatchEvent(new CustomEvent('smartAccountRefreshed'));
+      }
+    } catch (error) {
+      console.error('Failed to refresh smart account balance:', error);
+    }
+  }, [account?.address, refreshAccount]);
+
   // Handle successful transfer
   useEffect(() => {
     if (isSuccess && data) {
@@ -313,8 +345,10 @@ function BalanceTransfer() {
       setAmount('');
       // Refresh wallet balance
       fetchWalletBalance();
+      // Refresh smart account balance
+      refreshSmartAccountBalance();
     }
-  }, [isSuccess, data, fetchWalletBalance]);
+  }, [isSuccess, data, fetchWalletBalance, refreshSmartAccountBalance]);
 
   // Handle transfer error
   useEffect(() => {
@@ -322,6 +356,28 @@ function BalanceTransfer() {
       setTransferStatus({ type: 'error', message: opError.message });
     }
   }, [isError, opError]);
+
+  // Hide transfer status after 5 seconds with fade out
+  useEffect(() => {
+    if (transferStatus && (transferStatus.type === 'success' || transferStatus.type === 'error')) {
+      const fadeTimer = setTimeout(() => {
+        // Add fade-out class to trigger CSS transition
+        const statusElement = document.querySelector('.balance-transfer-card .status-message');
+        if (statusElement) {
+          statusElement.classList.add('fade-out');
+        }
+      }, 4500); // Start fade 0.5s before hiding
+
+      const hideTimer = setTimeout(() => {
+        setTransferStatus(null);
+      }, 5000);
+
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [transferStatus]);
 
   const isFormValid = amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(formatSbcBalance(walletBalance || '0'));
 
@@ -436,7 +492,8 @@ function BalanceTransfer() {
       {transferStatus && (
         <div className={`status-message ${transferStatus.type}`}>
           {transferStatus.type === 'success' && (
-            <div>
+            <div className="status-content">
+              <FaCheckCircle className="status-icon" />
               <p>Transfer Successful!</p>
               <a 
                 href={`https://basescan.org/tx/${transferStatus.hash}`}
@@ -444,21 +501,22 @@ function BalanceTransfer() {
                 rel="noopener noreferrer"
                 className="tx-link"
               >
-                View on BaseScan: {transferStatus.hash}
+                View on BaseScan
               </a>
             </div>
           )}
           
           {transferStatus.type === 'error' && (
-            <div>
+            <div className="status-content">
+              <FaExclamationCircle className="status-icon" />
               <p>Transfer Failed</p>
-              <p>{transferStatus.message}</p>
             </div>
           )}
           
           {transferStatus.type === 'pending' && (
-            <div>
-              <p>{transferStatus.message}</p>
+            <div className="status-content">
+              <FaSpinner className="status-icon spinning" />
+              <p>Processing...</p>
             </div>
           )}
         </div>

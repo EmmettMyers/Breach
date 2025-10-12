@@ -59,6 +59,7 @@ function SmartAccountInfo() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   // Fetch SBC balance for smart account
   useEffect(() => {
@@ -101,6 +102,39 @@ function SmartAccountInfo() {
     const timeout = setTimeout(fetchSbcBalance, 500);
     return () => clearTimeout(timeout);
   }, [account?.address]);
+
+  // Listen for smart account refresh events
+  useEffect(() => {
+    const handleSmartAccountRefresh = () => {
+      console.log('Smart account refresh event received, updating UI...');
+      setForceUpdate(prev => prev + 1);
+      // Also refresh the account data and balance
+      if (account?.address) {
+        refreshAccount?.();
+        // Re-fetch balance
+        const fetchBalance = async () => {
+          setIsLoadingBalance(true);
+          try {
+            const balance = await publicClient.readContract({
+              address: SBC_TOKEN_ADDRESS(chain),
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [account.address],
+            });
+            setSbcBalance(balance.toString());
+          } catch (error) {
+            console.error('Failed to refresh SBC balance:', error);
+          } finally {
+            setIsLoadingBalance(false);
+          }
+        };
+        fetchBalance();
+      }
+    };
+
+    window.addEventListener('smartAccountRefreshed', handleSmartAccountRefresh);
+    return () => window.removeEventListener('smartAccountRefreshed', handleSmartAccountRefresh);
+  }, [account?.address, refreshAccount]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
