@@ -95,6 +95,11 @@ const Navigation = () => {
       const { balance, formattedBalance } = event.detail;
       setSbcBalance(balance);
       setForceUpdate(prev => prev + 1);
+      
+      // Force a re-render to ensure the pill updates immediately
+      setTimeout(() => {
+        setForceUpdate(prev => prev + 1);
+      }, 100);
     };
 
     // Listen for custom wallet connection events

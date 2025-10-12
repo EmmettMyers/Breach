@@ -26,13 +26,14 @@
 }
 
 .back-button {
-  background: var(--color-button-background);
   color: var(--color-text-primary);
   padding: 0.5rem 0rem;
   cursor: pointer;
   font-size: 0.9rem;
   margin-right: 0.5rem;
   transition: all 0.3s ease;
+  background: transparent;
+  border: none;
 }
 
 .back-button:hover {

@@ -95,6 +95,15 @@ const Chat = () => {
               args: [account.address],
             });
             setSbcBalance(balance.toString());
+            
+            // Dispatch event to update navigation pill
+            const formattedBalance = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
+            window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', {
+              detail: {
+                balance: balance.toString(),
+                formattedBalance: formattedBalance
+              }
+            }));
           } catch (error) {
             console.error('Failed to refresh SBC balance:', error);
           }
