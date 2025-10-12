@@ -485,15 +485,7 @@ const Chat = () => {
     textarea.style.height = `${newHeight}px`;
   };
 
-  if (!model) {
-    return (
-      <div className="chat-screen">
-        <div className="loading">Loading model...</div>
-      </div>
-    );
-  }
-
-  if (isLoadingAccount) {
+  if (!model || isLoadingAccount) {
     return (
       <div className="chat-screen">
         <LoadingSpinner
