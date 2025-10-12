@@ -97,7 +97,7 @@ const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
       </div>
 
       <div className="jailbreak-badges">
-        <span className="prize">{model.prize} SBC Prize</span>
+        <span className="prize">{parseFloat(model.prize).toFixed(4)} SBC Prize</span>
         <span className="prompt-cost">{model.promptCost} SBC/prompt</span>
         <span className="attempts">{model.attempts} attempts</span>
       </div>
@@ -323,7 +323,7 @@ const Explore = () => {
       setPopup({
         isOpen: true,
         title: 'Invalid Amount',
-        message: `Please enter a valid withdrawal amount (max: ${model.prize} SBC).`,
+        message: `Please enter a valid withdrawal amount (max: ${parseFloat(model.prize).toFixed(4)} SBC).`,
         type: 'error'
       });
       return;

@@ -6,6 +6,19 @@ import ErrorState from '../components/ErrorState';
 import NoDataState from '../components/NoDataState';
 import '../styles/screens/Statistics.css';
 
+// Model name to display string mapping
+const modelDisplayMap = {
+  'gpt-4': 'GPT-4',
+  'claude-3': 'Claude 3',
+  'gemini-2.5': 'Gemini 2.5'
+};
+
+// Helper function to get display name for model
+const getModelDisplayName = (model) => {
+  console.log('Model Name:', model);
+  return modelDisplayMap[model] || model;
+};
+
 const Statistics = () => {
   const { account } = useWalletState();
   const [userStats, setUserStats] = useState(null);
@@ -165,8 +178,8 @@ const Statistics = () => {
               <table className="model-stats-table">
                 <thead>
                   <tr>
-                    <th>Model Name</th>
-                    <th>Model Type</th>
+                    <th>Jailbroken Model Name</th>
+                    <th>Jailbroken Model Type</th>
                     <th>Your Prompts</th>
                     <th>Total Prompts</th>
                     <th>Payout (SBC)</th>
@@ -177,7 +190,7 @@ const Statistics = () => {
                      Object.entries(modelStats).map(([modelName, stats]) => (
                        <tr key={modelName}>
                          <td className="model-name">{stats.model_name}</td>
-                         <td className="model-type">{stats.model}</td>
+                         <td className="model-type">{getModelDisplayName(stats.model)}</td>
                          <td className="your-prompts">{stats.your_prompts.toLocaleString()}</td>
                          <td className="total-prompts">{stats.total_prompts.toLocaleString()}</td>
                          <td className="payout">{stats.payout.toFixed(3)}</td>
@@ -186,7 +199,7 @@ const Statistics = () => {
                    ) : (
                      <tr>
                        <td colSpan="5" className="empty-table-message">
-                         No model statistics available
+                         You haven't broken any models yet.
                        </td>
                      </tr>
                    )}

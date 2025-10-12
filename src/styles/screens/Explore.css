@@ -84,7 +84,7 @@
 
 .models-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   width: 100%;
   justify-items: center;
@@ -221,7 +221,7 @@
   }
 
   .models-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
@@ -235,6 +235,10 @@
 }
 
 @media (max-width: 480px) {
+  .models-grid {
+    grid-template-columns: 1fr;
+  }
+
   .model-card {
     padding: 1rem;
   }

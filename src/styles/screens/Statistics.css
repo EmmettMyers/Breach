@@ -271,19 +271,39 @@
 .your-prompts {
   font-weight: 500;
   color: var(--color-text-primary);
-  text-align: right;
+  text-align: left;
 }
 
 .total-prompts {
   font-weight: 500;
   color: var(--color-text-primary);
-  text-align: right;
+  text-align: left;
 }
 
 .payout {
   font-weight: 600;
   color: #00ff88;
-  text-align: right;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+/* Jailbreak table specific styles */
+.jailbreak-attempts {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.jailbreak-success-rate {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.jailbreak-payout {
+  font-weight: 600;
+  color: #00ff88;
+  text-align: left;
   font-size: 1.1rem;
 }
 
