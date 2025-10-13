@@ -36,8 +36,12 @@ const Statistics = () => {
     }
   };
 
-  useEffect(() => {
+  const handleAccountChange = () => {
     fetchStats();
+  };
+
+  useEffect(() => {
+    handleAccountChange();
   }, [account?.address]);
 
 

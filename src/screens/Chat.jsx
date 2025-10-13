@@ -5,8 +5,12 @@ import { erc20Abi } from 'viem';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
 import { fetchModels, sendAgentMessage, fetchMessages } from '../utils/apiService';
-import { modelDisplayMap } from '../utils/modelUtils';
+import { formatSbcBalance, scrollToBottom, handleScroll, setTransferStatusWithTimeout, isModelOwner } from '../utils/chatUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ChatHeader from '../components/chat/ChatHeader';
+import ModelManagement from '../components/chat/ModelManagement';
+import MessageList from '../components/chat/MessageList';
+import MessageInput from '../components/chat/MessageInput';
 import '../styles/screens/Chat.css';
 
 const Chat = () => {
@@ -29,50 +33,32 @@ const Chat = () => {
   const transferStatusTimeoutRef = useRef(null);
   const currentMessageRef = useRef(null);
 
-  const setTransferStatusWithTimeout = (status) => {
-    setTransferStatus(status);
-    
-    if (transferStatusTimeoutRef.current) {
-      clearTimeout(transferStatusTimeoutRef.current);
-    }
-    
-    transferStatusTimeoutRef.current = setTimeout(() => {
-      const statusElement = document.querySelector('.transfer-status');
-      if (statusElement) {
-        statusElement.classList.add('fade-out');
-        setTimeout(() => {
-          setTransferStatus(null);
-        }, 150);
-      } else {
-        setTransferStatus(null);
-      }
-    }, 3000);
-  };
+  const setTransferStatusWithTimeoutFn = setTransferStatusWithTimeout(setTransferStatus, transferStatusTimeoutRef);
 
   const { account, ownerAddress, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
-      setTransferStatusWithTimeout({ type: 'success', hash: result.transactionHash });
-      
+      setTransferStatusWithTimeoutFn({ type: 'success', hash: result.transactionHash });
+
       const generateAIResponse = async (userMessage) => {
         try {
           const messageContent = userMessage;
-          
+
           if (!messageContent || !messageContent.trim()) {
             throw new Error('Message cannot be empty');
           }
-          
+
           if (!account?.address) {
             throw new Error('Wallet not connected');
           }
-          
+
           const response = await sendAgentMessage(
             messageContent,
             model.model_address || model.id,
             account.address,
             account.address
           );
-          
+
           const aiResponse = {
             id: Date.now() + 1,
             type: 'ai',
@@ -83,7 +69,7 @@ const Chat = () => {
           };
 
           setMessages(prev => [...prev, aiResponse]);
-          
+
           if (response.called_tools && response.called_tools.length > 0) {
             setShowJailbreakSuccess(true);
             setIsModelJailbroken(true);
@@ -92,10 +78,10 @@ const Chat = () => {
             }, 3000);
           }
         } catch (error) {
-          
+
           let errorMessage = 'An unexpected error occurred';
           let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage}". Please try again.`;
-          
+
           if (error.message.includes('HTTP error')) {
             errorMessage = 'Server error - please try again later';
             aiResponseContent = `I'm experiencing server issues. Please try again in a moment.`;
@@ -109,7 +95,7 @@ const Chat = () => {
             errorMessage = 'Please enter a message';
             aiResponseContent = `Please enter a message to continue.`;
           }
-          
+
           const fallbackResponse = {
             id: Date.now() + 1,
             type: 'ai',
@@ -117,18 +103,18 @@ const Chat = () => {
             timestamp: new Date()
           };
           setMessages(prev => [...prev, fallbackResponse]);
-          
-          setTransferStatusWithTimeout({ 
-            type: 'error', 
-            message: `AI response failed: ${errorMessage}` 
+
+          setTransferStatusWithTimeoutFn({
+            type: 'error',
+            message: `AI response failed: ${errorMessage}`
           });
         } finally {
           setIsLoading(false);
         }
       };
-      
+
       generateAIResponse(currentMessageRef.current);
-      
+
       if (account?.address) {
         const refreshBalance = async () => {
           try {
@@ -139,7 +125,7 @@ const Chat = () => {
               args: [account.address],
             });
             setSbcBalance(balance.toString());
-            
+
             const formattedBalance = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
             window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', {
               detail: {
@@ -154,9 +140,9 @@ const Chat = () => {
       }
     },
     onError: (error) => {
-      setTransferStatusWithTimeout({ type: 'error', message: error.message });
+      setTransferStatusWithTimeoutFn({ type: 'error', message: error.message });
       setIsLoading(false);
-      
+
       setMessages(prev => {
         const lastUserMessageIndex = prev.findLastIndex(msg => msg.type === 'user');
         if (lastUserMessageIndex !== -1) {
@@ -167,191 +153,186 @@ const Chat = () => {
     }
   });
 
+  const loadModel = async () => {
+    try {
+      const apiResponse = await fetchModels();
+      const apiModels = Array.isArray(apiResponse) ? apiResponse :
+        (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
+          (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
+
+      if (Array.isArray(apiModels) && apiModels.length > 0) {
+        const mappedModels = apiModels.map((model, index) => ({
+          id: model.model_id || model._id || index + 1,
+          title: model.model_name || 'Unnamed Model',
+          description: `AI model created by ${model.username || 'Unknown User'}`,
+          creator: model.username || 'Unknown User',
+          aiModel: model.model || 'Unknown AI Model',
+          promptCost: model.prompt_cost || 0.00,
+          prize: model.prize_value || 0,
+          attempts: model.attempts || 0,
+          user_id: model.user_id || null,
+          model_address: model.model_address || model.wallet_address || null,
+          smart_address: model.smartAccount.address || null,
+          jailbroken: model.jailbroken || false
+        }));
+
+        const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
+        if (foundModel) {
+          setModel(foundModel);
+          setIsModelJailbroken(foundModel.jailbroken || false);
+          setMessages([]);
+          return;
+        }
+      }
+
+      navigate('/');
+    } catch (error) {
+      navigate('/');
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!model || !account?.address) return;
+
+    try {
+      const messagesResponse = await fetchMessages(
+        account.address,
+        model.model_address || model.id
+      );
+
+      if (messagesResponse && messagesResponse.messages && Array.isArray(messagesResponse.messages)) {
+        const transformedMessages = messagesResponse.messages.map((msg, index) => ({
+          id: msg.id || Date.now() + index,
+          type: msg.type || (msg.role === 'user' ? 'user' : 'ai'),
+          content: msg.content || msg.message || '',
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+          calledTools: msg.called_tools || null,
+          model: msg.model || model.title
+        }));
+
+        setMessages(transformedMessages);
+      }
+    } catch (error) {
+      setMessages([]);
+    }
+  };
+
+  const handleModelIdChange = () => {
+    loadModel();
+  };
+
+  const handleModelOrAccountChange = () => {
+    loadMessages();
+  };
+
+  const scrollToBottomFn = (smooth = true) => scrollToBottom(messagesEndRef, smooth);
+
+  const handleMessagesChange = () => {
+    setTimeout(() => {
+      scrollToBottomFn(true);
+    }, 100);
+  };
+
+  const handleLoadingChange = () => {
+    if (isLoading) {
+      setTimeout(() => {
+        scrollToBottomFn(true);
+      }, 100);
+    }
+  };
+
+  const handleScrollFn = () => handleScroll(messagesContainerRef, setShowScrollButton);
+
+  const fetchSbcBalance = async () => {
+    setIsLoadingBalance(true);
+    try {
+      const balance = await publicClient.readContract({
+        address: SBC_TOKEN_ADDRESS(chain),
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [account.address],
+      });
+      setSbcBalance(balance.toString());
+    } catch (error) {
+      setSbcBalance('0');
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  const handleAccountChange = () => {
+    if (!account?.address) return;
+    fetchSbcBalance();
+  };
+
+  const cleanupTransferStatus = () => {
+    if (transferStatusTimeoutRef.current) {
+      clearTimeout(transferStatusTimeoutRef.current);
+    }
+  };
 
   useEffect(() => {
-    const loadModel = async () => {
-      try {
-        const apiResponse = await fetchModels();
-        const apiModels = Array.isArray(apiResponse) ? apiResponse :
-          (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
-            (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
-
-        if (Array.isArray(apiModels) && apiModels.length > 0) {
-          const mappedModels = apiModels.map((model, index) => ({
-            id: model.model_id || model._id || index + 1,
-            title: model.model_name || 'Unnamed Model',
-            description: `AI model created by ${model.username || 'Unknown User'}`,
-            creator: model.username || 'Unknown User',
-            aiModel: model.model || 'Unknown AI Model',
-            promptCost: model.prompt_cost || 0.00,
-            prize: model.prize_value || 0,
-            attempts: model.attempts || 0,
-            user_id: model.user_id || null,
-            model_address: model.model_address || model.wallet_address || null,
-            smart_address: model.smartAccount.address || null,
-            jailbroken: model.jailbroken || false
-          }));
-
-          const foundModel = mappedModels.find(m => m.id === modelId || m.id === parseInt(modelId));
-          if (foundModel) {
-            setModel(foundModel);
-            setIsModelJailbroken(foundModel.jailbroken || false);
-            setMessages([]);
-            return;
-          }
-        }
-
-        navigate('/');
-      } catch (error) {
-        navigate('/');
-      }
-    };
-
-    loadModel();
+    handleModelIdChange();
   }, [modelId, navigate]);
 
   useEffect(() => {
-    const loadMessages = async () => {
-      if (!model || !account?.address) return;
-
-      try {
-        const messagesResponse = await fetchMessages(
-          account.address,
-          model.model_address || model.id
-        );
-        
-        if (messagesResponse && messagesResponse.messages && Array.isArray(messagesResponse.messages)) {
-          const transformedMessages = messagesResponse.messages.map((msg, index) => ({
-            id: msg.id || Date.now() + index,
-            type: msg.type || (msg.role === 'user' ? 'user' : 'ai'),
-            content: msg.content || msg.message || '',
-            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-            calledTools: msg.called_tools || null,
-            model: msg.model || model.title
-          }));
-          
-          setMessages(transformedMessages);
-        }
-      } catch (error) {
-        setMessages([]);
-      }
-    };
-
-    loadMessages();
+    handleModelOrAccountChange();
   }, [model, account?.address]);
 
-  const scrollToBottom = (smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: smooth ? 'smooth' : 'auto',
-        block: 'end',
-        inline: 'nearest'
-      });
-    }
-  };
-
   useEffect(() => {
-    setTimeout(() => {
-      scrollToBottom(true);
-    }, 100);
+    handleMessagesChange();
   }, [messages]);
 
   useEffect(() => {
-    if (isLoading) {
-      setTimeout(() => {
-        scrollToBottom(true);
-      }, 100);
-    }
+    handleLoadingChange();
   }, [isLoading]);
 
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-      setShowScrollButton(!isAtBottom);
-    }
-  };
-
   useEffect(() => {
-    if (!account?.address) return;
-
-    const fetchSbcBalance = async () => {
-      setIsLoadingBalance(true);
-      try {
-        const balance = await publicClient.readContract({
-          address: SBC_TOKEN_ADDRESS(chain),
-          abi: erc20Abi,
-          functionName: 'balanceOf',
-          args: [account.address],
-        });
-        setSbcBalance(balance.toString());
-      } catch (error) {
-        setSbcBalance('0');
-      } finally {
-        setIsLoadingBalance(false);
-      }
-    };
-
-    fetchSbcBalance();
+    handleAccountChange();
   }, [account?.address]);
 
   useEffect(() => {
-    return () => {
-      if (transferStatusTimeoutRef.current) {
-        clearTimeout(transferStatusTimeoutRef.current);
-      }
-    };
+    return cleanupTransferStatus;
   }, []);
 
-  const formatSbcBalance = (balance) => {
-    if (!balance) return '0.0000';
-    try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
-    } catch {
-      return '0.0000';
-    }
-  };
-
-  const isModelOwner = () => {
-    return ownerAddress && model && model.user_id === ownerAddress;
-  };
+  const isModelOwnerFn = () => isModelOwner(ownerAddress, model);
 
   const handleDepositPrize = () => {
     if (!depositAmount || depositAmount <= 0) {
-      setTransferStatusWithTimeout({ 
-        type: 'error', 
-        message: 'Please enter a valid deposit amount.' 
+      setTransferStatusWithTimeoutFn({
+        type: 'error',
+        message: 'Please enter a valid deposit amount.'
       });
       return;
     }
-    
-    setTransferStatusWithTimeout({ 
-      type: 'success', 
-      message: `Successfully deposited ${depositAmount} SBC to ${model.title}'s prize pool.` 
+
+    setTransferStatusWithTimeoutFn({
+      type: 'success',
+      message: `Successfully deposited ${depositAmount} SBC to ${model.title}'s prize pool.`
     });
     setDepositAmount('');
   };
 
   const handleWithdrawPrize = () => {
     if (!withdrawAmountChat || withdrawAmountChat <= 0 || withdrawAmountChat > model.prize) {
-      setTransferStatusWithTimeout({ 
-        type: 'error', 
-        message: `Please enter a valid withdrawal amount (max: ${Number(model.prize).toFixed(4)} SBC).` 
+      setTransferStatusWithTimeoutFn({
+        type: 'error',
+        message: `Please enter a valid withdrawal amount (max: ${Number(model.prize).toFixed(4)} SBC).`
       });
       return;
     }
-    
-    setTransferStatusWithTimeout({ 
-      type: 'success', 
-      message: `Successfully withdrew ${withdrawAmountChat} SBC from ${model.title}'s prize pool.` 
+
+    setTransferStatusWithTimeoutFn({
+      type: 'success',
+      message: `Successfully withdrew ${withdrawAmountChat} SBC from ${model.title}'s prize pool.`
     });
     setWithdrawAmountChat('');
   };
 
   const handleDeleteModel = () => {
-    setTransferStatusWithTimeout({ 
-      type: 'error', 
-      message: `Are you sure you want to delete "${model.title}"? This action cannot be undone.` 
+    setTransferStatusWithTimeoutFn({
+      type: 'error',
+      message: `Are you sure you want to delete "${model.title}"? This action cannot be undone.`
     });
   };
 
@@ -369,7 +350,7 @@ const Chat = () => {
     currentMessageRef.current = inputMessage;
     setInputMessage('');
     setIsLoading(true);
-    
+
     const textarea = document.querySelector('.message-input');
     if (textarea) {
       textarea.style.height = '44px';
@@ -377,8 +358,8 @@ const Chat = () => {
 
     if (account) {
       try {
-        setTransferStatusWithTimeout({ type: 'processing', message: 'Processing SBC payment from smart account...' });
-        
+        setTransferStatusWithTimeoutFn({ type: 'processing', message: 'Processing SBC payment from smart account...' });
+
         await sendSBCTransfer({
           account,
           sendUserOperation,
@@ -386,7 +367,7 @@ const Chat = () => {
           amount: model.promptCost.toString()
         });
       } catch (error) {
-        setTransferStatusWithTimeout({ type: 'error', message: `SBC transfer failed: ${error.message}` });
+        setTransferStatusWithTimeoutFn({ type: 'error', message: `SBC transfer failed: ${error.message}` });
         setIsLoading(false);
         return;
       }
@@ -403,17 +384,17 @@ const Chat = () => {
   const handleInputChange = (e) => {
     setInputMessage(e.target.value);
     const textarea = e.target;
-    
+
     textarea.style.height = 'auto';
-    
+
     const computedStyle = window.getComputedStyle(textarea);
     const lineHeight = parseFloat(computedStyle.lineHeight) || 20;
     const maxLines = 8;
     const padding = 24;
     const maxHeight = (lineHeight * maxLines) + padding;
-    
+
     const scrollHeight = textarea.scrollHeight;
-    
+
     const newHeight = Math.min(scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
   };
@@ -422,7 +403,7 @@ const Chat = () => {
     return (
       <div className="chat-screen">
         <LoadingSpinner
-          size="large" 
+          size="large"
           fullScreen={true}
         />
       </div>
@@ -431,69 +412,21 @@ const Chat = () => {
 
   return (
     <div className="chat-screen">
-      <div className="chat-header">
-        <button className="back-button" onClick={() => navigate('/')}>
-          ← Back
-        </button>
-        <div className="model-info">
-          <h1 className="model-title">{model.title}</h1>
-          <div className="model-meta">
-            <span className="creator">{model.creator}</span>
-            <span className="ai-model">•&nbsp;&nbsp;{modelDisplayMap[model.aiModel] || model.aiModel}</span>
-            {isModelOwner() && (
-              <span className="owned-pill">Your Model</span>
-            )}
-          </div>
-        </div>
-        <div className="model-stats">
-          <div className="stat">
-            <span className="stat-value">{Number(model.prize).toFixed(4)}</span>
-            <span className="stat-label">SBC Prize</span>
-          </div>
-          <div className="stat">
-            <span className="stat-value">{model.attempts}</span>
-            <span className="stat-label">Attempts</span>
-          </div>
-        </div>
-      </div>
+      <ChatHeader
+        model={model}
+        isModelOwner={isModelOwnerFn()}
+      />
 
-      {isModelOwner() && (
-        <div className="model-management-nav">
-          <div className="nav-section">
-            <div className="nav-header">
-              <h4>Model Management</h4>
-              <div className="nav-actions">
-                <div className="action-group">
-                  <input
-                    type="number"
-                    placeholder="Deposit amount (SBC)"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    className="nav-input"
-                  />
-                  <button onClick={handleDepositPrize} className="nav-button deposit">
-                    Deposit Prize
-                  </button>
-                </div>
-                <div className="action-group">
-                  <input
-                    type="number"
-                    placeholder="Withdraw amount (SBC)"
-                    value={withdrawAmountChat}
-                    onChange={(e) => setWithdrawAmountChat(e.target.value)}
-                    className="nav-input"
-                  />
-                  <button onClick={handleWithdrawPrize} className="nav-button withdraw">
-                    Withdraw Prize
-                  </button>
-                </div>
-                <button onClick={handleDeleteModel} className="nav-button delete">
-                  Delete Model
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {isModelOwnerFn() && (
+        <ModelManagement
+          depositAmount={depositAmount}
+          setDepositAmount={setDepositAmount}
+          withdrawAmountChat={withdrawAmountChat}
+          setWithdrawAmountChat={setWithdrawAmountChat}
+          handleDepositPrize={handleDepositPrize}
+          handleWithdrawPrize={handleWithdrawPrize}
+          handleDeleteModel={handleDeleteModel}
+        />
       )}
 
       <div className="chat-container">
@@ -505,38 +438,16 @@ const Chat = () => {
             </div>
           </div>
         )}
-        
-        <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
-          {messages.map((message) => (
-            <div key={message.id} className={`message ${message.type}`}>
-              <div className="message-content">
-                {message.content}
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="message ai">
-              <div className="message-content">
-                <div className="typing-indicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-          
-          {showScrollButton && (
-            <button 
-              className="scroll-to-bottom-button"
-              onClick={() => scrollToBottom(true)}
-              title="Scroll to bottom"
-            >
-              ↓
-            </button>
-          )}
-        </div>
+
+        <MessageList
+          messages={messages}
+          isLoading={isLoading}
+          showScrollButton={showScrollButton}
+          scrollToBottom={scrollToBottomFn}
+          messagesContainerRef={messagesContainerRef}
+          messagesEndRef={messagesEndRef}
+          onScroll={handleScrollFn}
+        />
 
         {transferStatus && (
           <div className={`transfer-status ${transferStatus.type}`}>
@@ -558,46 +469,20 @@ const Chat = () => {
           </div>
         )}
 
-        <div className="input-container">
-          {isModelJailbroken ? (
-            <div className="jailbreak-lock-message">
-              <div className="success-check">✓</div>
-              <div className="lock-text">
-                <span>Model Successfully Jailbroken!</span>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="input-wrapper">
-                <textarea
-                  value={inputMessage}
-                  onChange={handleInputChange}
-                  onKeyPress={handleKeyPress}
-                  placeholder={`Enter prompts to jailbreak ${model.title}...`}
-                  className="message-input"
-                  rows="1"
-                  disabled={isLoading || isTransferLoading || !account}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || isLoading || isTransferLoading || !account || (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost)}
-                  className="send-button"
-                >
-                  {isTransferLoading ? 'Processing...' : isLoading ? 'Sending...' : 
-                    (sbcBalance && parseFloat(formatSbcBalance(sbcBalance)) < model.promptCost) ? 'Insufficient Balance' : 'Send'}
-                </button>
-              </div>
-              <div className="cost-info">
-                Cost: {parseFloat(model.promptCost).toFixed(4)} SBC per prompt
-                {account && (
-                  <span className="account-balance">
-                    &nbsp;• SBC Balance: {isLoadingBalance ? 'Loading...' : `${formatSbcBalance(sbcBalance)} SBC`}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        <MessageInput
+          model={model}
+          inputMessage={inputMessage}
+          handleSendMessage={handleSendMessage}
+          handleKeyPress={handleKeyPress}
+          handleInputChange={handleInputChange}
+          isLoading={isLoading}
+          isTransferLoading={isTransferLoading}
+          account={account}
+          sbcBalance={sbcBalance}
+          formatSbcBalance={formatSbcBalance}
+          isModelJailbroken={isModelJailbroken}
+          isLoadingBalance={isLoadingBalance}
+        />
       </div>
     </div>
   );

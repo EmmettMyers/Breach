@@ -19,7 +19,7 @@ export const useWalletState = () => {
     setIsLoadingWalletBalance(true);
     try {
       const sbcTokenAddress = import.meta.env.VITE_SBC_TOKEN_ADDRESS || '';
-      
+
       if (!sbcTokenAddress) {
         setWalletBalance({
           formatted: '0',
@@ -29,22 +29,22 @@ export const useWalletState = () => {
         });
         return;
       }
-      
+
       const publicClient = createPublicClient({
         chain: baseSepolia,
         transport: http()
       });
-      
+
       const erc20Abi = [
         {
-          "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+          "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
           "name": "balanceOf",
-          "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+          "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
           "stateMutability": "view",
           "type": "function"
         }
       ];
-      
+
       const code = await publicClient.getBytecode({ address: sbcTokenAddress });
       if (!code || code === '0x') {
         setWalletBalance({
@@ -62,11 +62,11 @@ export const useWalletState = () => {
         functionName: 'balanceOf',
         args: [account.address]
       });
-      
-      
+
+
       if (balance !== undefined && balance !== null) {
         const formattedBalance = formatUnits(balance, 18);
-        
+
         setWalletBalance({
           formatted: formattedBalance,
           symbol: 'SBC',
@@ -82,7 +82,7 @@ export const useWalletState = () => {
         });
       }
     } catch (error) {
-      
+
       try {
         setWalletBalance({
           formatted: '0',
@@ -129,7 +129,7 @@ export const useWalletState = () => {
       const timeout = setTimeout(() => {
         enhancedRefresh();
       }, 1000);
-      
+
       return () => clearTimeout(timeout);
     }
   }, [ownerAddress, enhancedRefresh]);
@@ -138,16 +138,16 @@ export const useWalletState = () => {
     if (ownerAddress && !account && !isLoadingAccount && !isRefreshing) {
       let pollCount = 0;
       const maxPolls = 10;
-      
+
       const interval = setInterval(() => {
         pollCount++;
         enhancedRefresh();
-        
+
         if (pollCount >= maxPolls) {
           clearInterval(interval);
         }
       }, 2000);
-      
+
       return () => clearInterval(interval);
     }
   }, [ownerAddress, account, isLoadingAccount, isRefreshing, enhancedRefresh]);

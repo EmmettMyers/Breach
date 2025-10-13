@@ -1,340 +1,48 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { WalletButton, useSbcApp } from '@stablecoin.xyz/react';
-import { erc20Abi } from 'viem';
-import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
-import BalanceTransfer from '../components/BalanceTransfer';
+import { useSbcApp } from '@stablecoin.xyz/react';
+import WalletConnectFlow from '../components/signin/WalletConnectFlow';
 import '../styles/screens/SignIn.css';
-
-function WalletStatus({ onDisconnect }) {
-  const { ownerAddress } = useSbcApp();
-
-  if (!ownerAddress) {
-    return (
-      <div className="wallet-status-card">
-        <div className="status-header">
-          <h3>Wallet Connected</h3>
-          <div className="skeleton skeleton-button" style={{width: '100px', height: '2rem'}}></div>
-        </div>
-        <div className="info-row">
-          <label>EOA Address:</label>
-          <div className="skeleton skeleton-text long"></div>
-        </div>
-        <div className="info-row">
-          <label>Connection:</label>
-          <div className="skeleton skeleton-text medium"></div>
-        </div>
-        <div className="info-row">
-          <label>Chain:</label>
-          <div className="skeleton skeleton-text short"></div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="wallet-status-card">
-      <div className="status-header">
-        <h3>Wallet Connected</h3>
-        <button onClick={onDisconnect} className="disconnect-btn">Disconnect</button>
-      </div>
-      <div className="info-row">
-        <label>EOA Address:</label>
-        <div className="address-display">{ownerAddress}</div>
-      </div>
-      <div className="info-row">
-        <label>Connection:</label>
-        <div className="value">Connected via wallet extension</div>
-      </div>
-      <div className="info-row">
-        <label>Chain:</label>
-        <div className="value">{chain.name}</div>
-      </div>
-    </div>
-  );
-}
-
-function SmartAccountInfo() {
-  const { account, isInitialized, refreshAccount, isLoadingAccount } = useSbcApp();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [sbcBalance, setSbcBalance] = useState(null);
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-
-  useEffect(() => {
-    if (!account?.address) return;
-
-    const fetchSbcBalance = async () => {
-      setIsLoadingBalance(true);
-      try {
-        const balance = await publicClient.readContract({
-          address: SBC_TOKEN_ADDRESS(chain),
-          abi: erc20Abi,
-          functionName: 'balanceOf',
-          args: [account.address],
-        });
-        setSbcBalance(balance.toString());
-        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
-          detail: { 
-            balance: balance.toString(),
-            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
-          } 
-        }));
-      } catch (error) {
-        setSbcBalance('0');
-        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
-          detail: { 
-            balance: '0',
-            formattedBalance: '0.0000'
-          } 
-        }));
-      } finally {
-        setIsLoadingBalance(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchSbcBalance, 500);
-    return () => clearTimeout(timeout);
-  }, [account?.address]);
-
-  useEffect(() => {
-    const handleSmartAccountRefresh = () => {
-      if (account?.address) {
-        refreshAccount?.();
-        const fetchBalance = async () => {
-          setIsLoadingBalance(true);
-          try {
-            const balance = await publicClient.readContract({
-              address: SBC_TOKEN_ADDRESS(chain),
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [account.address],
-            });
-            setSbcBalance(balance.toString());
-          } catch (error) {
-          } finally {
-            setIsLoadingBalance(false);
-          }
-        };
-        fetchBalance();
-      }
-    };
-
-    window.addEventListener('smartAccountRefreshed', handleSmartAccountRefresh);
-    return () => window.removeEventListener('smartAccountRefreshed', handleSmartAccountRefresh);
-  }, [account?.address, refreshAccount]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refreshAccount?.();
-      if (account?.address) {
-        setIsLoadingBalance(true);
-        try {
-          const balance = await publicClient.readContract({
-            address: SBC_TOKEN_ADDRESS(chain),
-            abi: erc20Abi,
-            functionName: 'balanceOf',
-            args: [account.address],
-          });
-          setSbcBalance(balance.toString());
-          window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
-            detail: { 
-              balance: balance.toString(),
-              formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
-            } 
-          }));
-        } catch (error) {
-        } finally {
-          setIsLoadingBalance(false);
-        }
-      }
-    } catch (error) {
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-
-  const formatSbcBalance = (balance) => {
-    if (!balance) return '0.0000';
-    try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
-    } catch {
-      return '0.0000';
-    }
-  };
-
-  if (!isInitialized) {
-    return (
-      <div className="smart-account-card">
-        <div className="status-header">
-          <h3>Smart Account</h3>
-          <div className="skeleton skeleton-button" style={{width: '80px', height: '2rem'}}></div>
-        </div>
-        <div className="info-row">
-          <label>Address:</label>
-          <div className="skeleton skeleton-text long"></div>
-        </div>
-        <div className="info-row">
-          <label>Deployed:</label>
-          <div className="skeleton skeleton-text medium"></div>
-        </div>
-        <div className="info-row">
-          <label>SBC Balance:</label>
-          <div className="skeleton skeleton-text medium"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!account) {
-    return (
-      <div className="smart-account-card">
-        <div className="status-header">
-          <h3>Smart Account</h3>
-          <div className="skeleton skeleton-button" style={{width: '80px', height: '2rem'}}></div>
-        </div>
-        <div className="info-row">
-          <label>Address:</label>
-          <div className="skeleton skeleton-text long"></div>
-        </div>
-        <div className="info-row">
-          <label>Deployed:</label>
-          <div className="skeleton skeleton-text medium"></div>
-        </div>
-        <div className="info-row">
-          <label>SBC Balance:</label>
-          <div className="skeleton skeleton-text medium"></div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="smart-account-card">
-      <div className="status-header">
-        <h3>Smart Account</h3>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing || isLoadingAccount}
-          className="refresh-btn"
-        >
-          {isRefreshing || isLoadingAccount ? 'Refreshing...' : 'Refresh'}
-        </button>
-      </div>
-      <div className="info-row">
-        <label>Address:</label>
-        <div className="address-display">{account.address}</div>
-      </div>
-      <div className="info-row">
-        <label>Deployed:</label>
-        <div className="value">{account.isDeployed ? 'Yes' : 'On first transaction'}</div>
-      </div>
-      <div className="info-row">
-        <label>SBC Balance:</label>
-        <div className="value">
-          {isLoadingBalance ? (
-            <div className="skeleton skeleton-text medium"></div>
-          ) : (
-            `${formatSbcBalance(sbcBalance)} SBC`
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WalletConnectFlow({ onDisconnect }) {
-  const { ownerAddress, disconnectWallet, refreshAccount } = useSbcApp();
-  const prevOwnerAddress = useRef(null);
-
-  useEffect(() => {
-    if (ownerAddress && !prevOwnerAddress.current) {
-      refreshAccount();
-      window.dispatchEvent(new CustomEvent('walletConnected', { 
-        detail: { ownerAddress } 
-      }));
-    }
-    prevOwnerAddress.current = ownerAddress;
-  }, [ownerAddress, refreshAccount]);
-
-  if (!ownerAddress || window.walletDisconnected) {
-    return (
-      <div className="connect-prompt">
-        <h3>Connect Your Crypto Wallet</h3>
-        <p>Enables creation of a smart account with gasless transactions and payments for jailbreak chats using stablecoin</p>
-        <div className="wallet-button-container">
-          <WalletButton
-            walletType="auto"
-            onConnect={refreshAccount}
-            render={({ onClick, isConnecting }) => (
-              <button
-                className="wallet-connect-btn"
-                onClick={onClick}
-                disabled={isConnecting}
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Crypto Wallet'}
-              </button>
-            )}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="connected-content">
-      <div className="left-column">
-        <WalletStatus onDisconnect={onDisconnect} />
-        <SmartAccountInfo />
-      </div>
-      <div className="right-column">
-        <BalanceTransfer />
-      </div>
-    </div>
-  );
-}
 
 const SignIn = () => {
   const { account, ownerAddress, isLoadingAccount, refreshAccount, disconnectWallet } = useSbcApp();
   const [isConnecting, setIsConnecting] = useState(false);
 
-  useEffect(() => {
+  const handleWalletConnection = () => {
     if (ownerAddress && account) {
       setIsConnecting(false);
       window.walletDisconnected = false;
     }
-  }, [ownerAddress, account]);
+  };
 
-  useEffect(() => {
+  const handleOwnerAddressChange = () => {
     if (ownerAddress) {
       const timeout = setTimeout(() => {
         refreshAccount();
       }, 1000);
-      
+
       return () => clearTimeout(timeout);
     }
-  }, [ownerAddress, refreshAccount]);
+  };
 
-  useEffect(() => {
+  const handleAccountPolling = () => {
     if (ownerAddress && !account && !isLoadingAccount) {
       let pollCount = 0;
       const maxPolls = 5;
-      
+
       const interval = setInterval(() => {
         pollCount++;
         refreshAccount();
-        
+
         if (pollCount >= maxPolls) {
           clearInterval(interval);
         }
       }, 5000);
-      
+
       return () => clearInterval(interval);
     }
-  }, [ownerAddress, account, isLoadingAccount, refreshAccount]);
+  };
 
-  useEffect(() => {
+  const handleConnectingTimeout = () => {
     if (isConnecting) {
       const timeout = setTimeout(() => {
         setIsConnecting(false);
@@ -342,15 +50,31 @@ const SignIn = () => {
 
       return () => clearTimeout(timeout);
     }
+  };
+
+  const handleWalletConnectionEvent = () => {
+    window.walletDisconnected = false;
+  };
+
+  useEffect(() => {
+    handleWalletConnection();
+  }, [ownerAddress, account]);
+
+  useEffect(() => {
+    handleOwnerAddressChange();
+  }, [ownerAddress, refreshAccount]);
+
+  useEffect(() => {
+    handleAccountPolling();
+  }, [ownerAddress, account, isLoadingAccount, refreshAccount]);
+
+  useEffect(() => {
+    handleConnectingTimeout();
   }, [isConnecting]);
 
   useEffect(() => {
-    const handleWalletConnection = () => {
-      window.walletDisconnected = false;
-    };
-
-    window.addEventListener('walletConnected', handleWalletConnection);
-    return () => window.removeEventListener('walletConnected', handleWalletConnection);
+    window.addEventListener('walletConnected', handleWalletConnectionEvent);
+    return () => window.removeEventListener('walletConnected', handleWalletConnectionEvent);
   }, []);
 
   const handleDisconnect = () => {
@@ -359,20 +83,6 @@ const SignIn = () => {
     setIsConnecting(false);
     window.dispatchEvent(new CustomEvent('walletDisconnected'));
   };
-
-  const handleWalletConnect = useCallback(() => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      refreshAccount();
-    }, 2000);
-  }, [refreshAccount]);
-
-  const handleWalletSelectorConnect = useCallback(() => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      refreshAccount();
-    }, 2000);
-  }, [refreshAccount]);
 
   return (
     <div className="signin-screen">

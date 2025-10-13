@@ -1,136 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSbcApp } from '@stablecoin.xyz/react';
-import { HiMenu, HiSearch } from 'react-icons/hi';
 import { fetchModels } from '../utils/apiService';
-import { modelDisplayMap } from '../utils/modelUtils';
+import { filterAndSortModels, mapApiModels, isModelOwner } from '../utils/exploreUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
+import Popup from '../components/explore/Popup';
+import ZeroState from '../components/explore/ZeroState';
+import ModelCard from '../components/explore/ModelCard';
+import ModelMenu from '../components/explore/ModelMenu';
+import SearchFilters from '../components/explore/SearchFilters';
 import '../styles/screens/Explore.css';
-
-const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="popup-overlay" onClick={onClose}>
-      <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-        <div className="popup-header">
-          <h3 className="popup-title">{title}</h3>
-          <button className="popup-close" onClick={onClose}>×</button>
-        </div>
-        <div className="popup-body">
-          <p className="popup-message">{message}</p>
-        </div>
-        <div className="popup-footer">
-          <button className="popup-button" onClick={onClose}>OK</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ZeroState = ({ searchTerm, selectedModel, selectedPrizeRange, ownedFilter, jailbrokenFilter }) => {
-  const getZeroStateMessage = () => {
-    if (searchTerm) {
-      return `No models found matching "${searchTerm}"`;
-    }
-    if (selectedModel !== 'all') {
-      return `No ${selectedModel} models found`;
-    }
-    if (selectedPrizeRange !== 'all') {
-      const rangeText = selectedPrizeRange === 'low' ? '0-50 SBC' :
-        selectedPrizeRange === 'medium' ? '51-150 SBC' : '150+ SBC';
-      return `No models found with ${rangeText} prize range`;
-    }
-    if (ownedFilter === 'my') {
-      return 'No models found that you own';
-    }
-    if (ownedFilter === 'exclude') {
-      return 'No models found from other creators';
-    }
-    if (jailbrokenFilter === 'jailbroken') {
-      return 'No jailbroken models found';
-    }
-    if (jailbrokenFilter === 'not-jailbroken') {
-      return 'No non-jailbroken models found';
-    }
-    return 'No models found';
-  };
-
-  const getZeroStateSubtext = () => {
-    if (searchTerm || selectedModel !== 'all' || selectedPrizeRange !== 'all' || ownedFilter !== 'all' || jailbrokenFilter !== 'all') {
-      return 'Try adjusting your filters to see more results';
-    }
-    return 'Check back later for new models';
-  };
-
-  return (
-    <div className="zero-state">
-      <div className="zero-state-icon">
-        <HiSearch />
-      </div>
-      <h3 className="zero-state-title">{getZeroStateMessage()}</h3>
-      <p className="zero-state-subtext">{getZeroStateSubtext()}</p>
-      <button
-        className="zero-state-button"
-        onClick={() => window.location.reload()}
-      >
-        Clear All Filters
-      </button>
-    </div>
-  );
-};
-
-const ModelCard = ({ model, onModelClick, onModelMenuClick, isOwner }) => {
-  const handleMenuClick = (e) => {
-    e.stopPropagation();
-    onModelMenuClick(model.id, e);
-  };
-
-  return (
-    <div className={`model-card ${isOwner ? 'owned' : ''} ${model.jailbroken ? 'jailbroken' : ''}`} onClick={() => onModelClick(model.id)}>
-      <div className="model-header">
-        <div className="model-title-container">
-          {model.jailbroken && (
-            <div className="jailbroken-indicator">
-              <span className="jailbroken-check">✓</span>
-            </div>
-          )}
-          <h3 className="model-title">{model.title}</h3>
-        </div>
-        {isOwner && (
-          <button
-            className="model-menu-button"
-            onClick={handleMenuClick}
-            title="Model Options"
-          >
-            <HiMenu />
-          </button>
-        )}
-      </div>
-
-      <div className="jailbreak-badges">
-        {model.jailbroken && (
-          <span className="jailbroken-badge">Jailbroken</span>
-        )}
-        <span className="prize">{parseFloat(model.prize).toFixed(4)} SBC Prize</span>
-        {!model.jailbroken && (
-          <>
-            <span className="prompt-cost">{parseFloat(model.promptCost).toFixed(4)} SBC/prompt</span>
-            <span className="attempts">{model.attempts} attempts</span>
-          </>
-        )}
-      </div>
-
-      <p className="model-description">{model.description}</p>
-
-      <div className="model-creator">
-        <span className="creator-name">{model.creator}</span>
-        <span className="ai-model">•&nbsp;&nbsp;{modelDisplayMap[model.aiModel] || model.aiModel}</span>
-      </div>
-    </div>
-  );
-};
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -150,113 +30,49 @@ const Explore = () => {
   const [isLoadingModels, setIsLoadingModels] = useState(true);
   const [modelsError, setModelsError] = useState(null);
 
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        setIsLoadingModels(true);
-        setModelsError(null);
-        const apiResponse = await fetchModels();
+  const loadModels = async () => {
+    try {
+      setIsLoadingModels(true);
+      setModelsError(null);
+      const apiResponse = await fetchModels();
 
-        const apiModels = Array.isArray(apiResponse) ? apiResponse :
-          (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
-            (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
+      const apiModels = Array.isArray(apiResponse) ? apiResponse :
+        (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
+          (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
 
-
-        if (!Array.isArray(apiModels) || apiModels.length === 0) {
-          setModelsError('No models found');
-          setModels([]);
-          return;
-        }
-
-        const mappedModels = apiModels.map((model, index) => ({
-          id: model.model_id || model._id || index + 1,
-          title: model.model_name || 'Unnamed Model',
-          description: model.model_description || 'No description available',
-          creator: model.username || 'Unknown User',
-          aiModel: model.model || 'Unknown AI Model',
-          promptCost: model.prompt_cost || 0.00,
-          prize: model.prize_value || 0,
-          attempts: model.attempts || 0,
-          user_id: model.user_id || null,
-          jailbroken: model.jailbroken || false
-        }));
-
-        setModels(mappedModels);
-      } catch (error) {
-        setModelsError('Failed to load models');
+      if (!Array.isArray(apiModels) || apiModels.length === 0) {
+        setModelsError('No models found');
         setModels([]);
-      } finally {
-        setIsLoadingModels(false);
+        return;
       }
-    };
 
+      const mappedModels = mapApiModels(apiModels);
+      setModels(mappedModels);
+    } catch (error) {
+      setModelsError('Failed to load models');
+      setModels([]);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
     loadModels();
   }, []);
 
   const uniqueModels = [...new Set(models.map(model => model.aiModel))];
 
-  const isModelOwner = (model) => {
-    return ownerAddress && model.user_id === ownerAddress;
-  };
-
-  const isModelOwnedByUser = (model) => {
-    return model.user_id === ownerAddress;
-  };
-
   const filteredAndSortedModels = useMemo(() => {
-    let filtered = models.filter(model => {
-      const matchesSearch = model.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        model.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        model.creator.toLowerCase().includes(searchTerm.toLowerCase());
+    const filters = {
+      searchTerm,
+      selectedModel,
+      selectedPrizeRange,
+      sortBy,
+      ownedFilter,
+      jailbrokenFilter
+    };
 
-      const matchesModel = selectedModel === 'all' || model.aiModel === selectedModel;
-
-      const matchesPrize = selectedPrizeRange === 'all' ||
-        (selectedPrizeRange === 'low' && model.prize <= 50) ||
-        (selectedPrizeRange === 'medium' && model.prize > 50 && model.prize <= 150) ||
-        (selectedPrizeRange === 'high' && model.prize > 150);
-
-      const matchesOwned =
-        ownedFilter === 'all' ||
-        (ownedFilter === 'my' && isModelOwnedByUser(model)) ||
-        (ownedFilter === 'exclude' && !isModelOwnedByUser(model));
-
-      const matchesJailbroken =
-        jailbrokenFilter === 'all' ||
-        (jailbrokenFilter === 'jailbroken' && model.jailbroken) ||
-        (jailbrokenFilter === 'not-jailbroken' && !model.jailbroken);
-
-      return matchesSearch && matchesModel && matchesPrize && matchesOwned && matchesJailbroken;
-    });
-
-    return filtered.sort((a, b) => {
-      if (ownerAddress && account) {
-        const aIsOwned = isModelOwnedByUser(a);
-        const bIsOwned = isModelOwnedByUser(b);
-
-        if (aIsOwned && !bIsOwned) return -1;
-        if (!aIsOwned && bIsOwned) return 1;
-      }
-
-      switch (sortBy) {
-        case 'title':
-          return a.title.localeCompare(b.title);
-        case 'prize-high':
-          return b.prize - a.prize;
-        case 'prize-low':
-          return a.prize - b.prize;
-        case 'cost-high':
-          return b.promptCost - a.promptCost;
-        case 'cost-low':
-          return a.promptCost - b.promptCost;
-        case 'attempts-high':
-          return b.attempts - a.attempts;
-        case 'attempts-low':
-          return a.attempts - b.attempts;
-        default:
-          return 0;
-      }
-    });
+    return filterAndSortModels(models, filters, ownerAddress, account);
   }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, jailbrokenFilter, ownerAddress, account, models]);
 
   const handleModelClick = (modelId) => {
@@ -358,71 +174,21 @@ const Explore = () => {
 
   return (
     <div className="explore-screen">
-      <div className="search-filter-container">
-        <input
-          type="text"
-          placeholder="Search AI models to jailbreak..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="filter-select"
-        >
-          <option value="title">Title A-Z</option>
-          <option value="prize-high">Prize H→L</option>
-          <option value="prize-low">Prize L→H</option>
-          <option value="cost-high">Cost H→L</option>
-          <option value="cost-low">Cost L→H</option>
-          <option value="attempts-high">Attempts H→L</option>
-          <option value="attempts-low">Attempts L→H</option>
-        </select>
-
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">All AI Models</option>
-          {uniqueModels.map(model => (
-            <option key={model} value={model}>{modelDisplayMap[model] || model}</option>
-          ))}
-        </select>
-
-        <select
-          value={selectedPrizeRange}
-          onChange={(e) => setSelectedPrizeRange(e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">All Ranges</option>
-          <option value="low">0 - 50 SBC</option>
-          <option value="medium">51 - 150 SBC</option>
-          <option value="high">150+ SBC</option>
-        </select>
-
-        <select
-          value={ownedFilter}
-          onChange={(e) => setOwnedFilter(e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">All User Models</option>
-          <option value="my">My Models</option>
-          <option value="exclude">Not My Models</option>
-        </select>
-
-        <select
-          value={jailbrokenFilter}
-          onChange={(e) => setJailbrokenFilter(e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">All Status</option>
-          <option value="jailbroken">Jailbroken</option>
-          <option value="not-jailbroken">Not Jailbroken</option>
-        </select>
-      </div>
+      <SearchFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
+        selectedPrizeRange={selectedPrizeRange}
+        setSelectedPrizeRange={setSelectedPrizeRange}
+        ownedFilter={ownedFilter}
+        setOwnedFilter={setOwnedFilter}
+        jailbrokenFilter={jailbrokenFilter}
+        setJailbrokenFilter={setJailbrokenFilter}
+        uniqueModels={uniqueModels}
+      />
 
       <div className="models-grid">
         {isLoadingModels ? (
@@ -458,7 +224,7 @@ const Explore = () => {
               model={model}
               onModelClick={handleModelClick}
               onModelMenuClick={handleModelMenuClick}
-              isOwner={isModelOwner(model)}
+              isOwner={isModelOwner(model, ownerAddress)}
             />
           ))
         )}
@@ -472,65 +238,18 @@ const Explore = () => {
         type={popup.type}
       />
 
-      {modelMenu.isOpen && (
-        <div
-          className="model-menu-overlay"
-          onClick={closeModelMenu}
-        >
-          <div
-            className="model-menu"
-            style={{
-              position: 'fixed',
-              left: modelMenu.x,
-              top: modelMenu.y,
-              zIndex: 1000
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="model-menu-header">
-              <h4>Model Options</h4>
-              <button className="close-menu" onClick={closeModelMenu}>×</button>
-            </div>
-
-            <div className="model-menu-actions">
-              <div className="menu-section">
-                <h5>Prize Management</h5>
-                <div className="input-group">
-                  <input
-                    type="number"
-                    placeholder="Deposit amount (SBC)"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    className="menu-input"
-                  />
-                  <button onClick={handleDepositPrize} className="menu-button deposit">
-                    Deposit Prize
-                  </button>
-                </div>
-                <div className="input-group">
-                  <input
-                    type="number"
-                    placeholder="Withdraw amount (SBC)"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="menu-input"
-                  />
-                  <button onClick={handleWithdrawPrize} className="menu-button withdraw">
-                    Withdraw Prize
-                  </button>
-                </div>
-              </div>
-
-              <div className="menu-section">
-                <h5>Model Actions</h5>
-                <button onClick={handleDeleteModel} className="menu-button delete">
-                  Delete Model
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModelMenu
+        isOpen={modelMenu.isOpen}
+        onClose={closeModelMenu}
+        modelMenu={modelMenu}
+        depositAmount={depositAmount}
+        setDepositAmount={setDepositAmount}
+        withdrawAmount={withdrawAmount}
+        setWithdrawAmount={setWithdrawAmount}
+        onDepositPrize={handleDepositPrize}
+        onWithdrawPrize={handleWithdrawPrize}
+        onDeleteModel={handleDeleteModel}
+      />
     </div>
   );
 };

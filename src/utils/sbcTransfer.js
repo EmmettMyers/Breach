@@ -11,21 +11,21 @@ export async function sendSBCTransfer({
   if (!account) {
     throw new Error('Missing smart account for SBC transfer');
   }
-  
+
   if (!recipientAddress) {
     throw new Error('Recipient address not configured. Please set VITE_DEFAULT_RECIPIENT_ADDRESS environment variable.');
   }
-  
+
   try {
     const recipientChecksum = getAddress(recipientAddress);
     const value = parseUnits(amount, SBC_DECIMALS(chain));
-    
+
     const transferCallData = encodeFunctionData({
       abi: erc20Abi,
       functionName: 'transfer',
       args: [recipientChecksum, value],
     });
-    
+
     const result = await sendUserOperation({
       calls: [
         { to: SBC_TOKEN_ADDRESS(chain), data: transferCallData },
