@@ -3,15 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useSbcApp } from '@stablecoin.xyz/react';
 import { HiMenu, HiSearch } from 'react-icons/hi';
 import { fetchModels } from '../utils/apiService';
+import { modelDisplayMap } from '../utils/modelUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import '../styles/screens/Explore.css';
-
-const modelDisplayMap = {
-  'gpt-4': 'GPT-4',
-  'claude-3': 'Claude 3',
-  'gemini-2.5': 'Gemini 2.5'
-};
 
 const Popup = ({ isOpen, onClose, title, message, type = 'info' }) => {
   if (!isOpen) return null;

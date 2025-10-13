@@ -1,129 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
-import { getAddress, parseSignature, parseUnits, encodeFunctionData, erc20Abi } from 'viem';
+import { getAddress, parseSignature, parseUnits } from 'viem';
 import { FaCheckCircle, FaExclamationCircle, FaSpinner } from 'react-icons/fa';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
-
-const erc20PermitAbi = [
-  ...erc20Abi,
-  {
-    "inputs": [
-      { "internalType": "address", "name": "owner", "type": "address" }
-    ],
-    "name": "nonces",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "name",
-    "outputs": [
-      { "internalType": "string", "name": "", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "version",
-    "outputs": [
-      { "internalType": "string", "name": "", "type": "string" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-const permitAbi = [
-  {
-    "inputs": [
-      { "internalType": "address", "name": "owner", "type": "address" },
-      { "internalType": "address", "name": "spender", "type": "address" },
-      { "internalType": "uint256", "name": "value", "type": "uint256" },
-      { "internalType": "uint256", "name": "deadline", "type": "uint256" },
-      { "internalType": "uint8", "name": "v", "type": "uint8" },
-      { "internalType": "bytes32", "name": "r", "type": "bytes32" },
-      { "internalType": "bytes32", "name": "s", "type": "bytes32" }
-    ],
-    "name": "permit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
-];
-
-async function getPermitSignature({
-  publicClient,
-  walletClient,
-  owner,
-  spender,
-  value,
-  tokenAddress,
-  chainId,
-  deadline,
-}) {
-  try {
-    const [tokenName, tokenVersion] = await Promise.all([
-      publicClient.readContract({
-        address: tokenAddress,
-        abi: erc20PermitAbi,
-        functionName: 'name',
-      }).catch(() => 'SBC'),
-      publicClient.readContract({
-        address: tokenAddress,
-        abi: erc20PermitAbi,
-        functionName: 'version',
-      }).catch(() => '1'),
-    ]);
-
-    const nonce = await publicClient.readContract({
-      address: tokenAddress,
-      abi: erc20PermitAbi,
-      functionName: 'nonces',
-      args: [owner],
-    });
-
-    const domain = {
-      name: tokenName,
-      version: tokenVersion,
-      chainId: chainId,
-      verifyingContract: tokenAddress,
-    };
-
-    const types = {
-      Permit: [
-        { name: 'owner', type: 'address' },
-        { name: 'spender', type: 'address' },
-        { name: 'value', type: 'uint256' },
-        { name: 'nonce', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' },
-      ],
-    };
-
-    const message = {
-      owner,
-      spender,
-      value: value.toString(),
-      nonce: nonce.toString(),
-      deadline: deadline.toString(),
-    };
-
-
-    const signature = await walletClient.signTypedData({
-      domain,
-      types,
-      primaryType: 'Permit',
-      message,
-    });
-
-    return signature;
-  } catch (error) {
-    return null;
-  }
-}
+import {
+  getPermitSignature,
+  fetchWalletBalance,
+  formatSbcBalance,
+  createPermitCallData,
+  createTransferFromCallData,
+  getSmartAccountBalance
+} from '../utils/ercUtils';
 
 function BalanceTransfer() {
   const { account, ownerAddress, sbcAppKit, refreshAccount } = useSbcApp();
@@ -138,7 +25,7 @@ function BalanceTransfer() {
 
   const checkNetwork = useCallback(async () => {
     if (!walletClient) return;
-    
+
     try {
       const chainId = await walletClient.getChainId();
       if (chainId !== chain.id) {
@@ -155,7 +42,7 @@ function BalanceTransfer() {
 
   const switchToBaseNetwork = async () => {
     if (!walletClient) return;
-    
+
     try {
       await walletClient.switchChain({ id: chain.id });
       setIsWrongNetwork(false);
@@ -183,7 +70,7 @@ function BalanceTransfer() {
     }
   };
 
-  const fetchWalletBalance = useCallback(async () => {
+  const loadWalletBalance = useCallback(async () => {
     if (!ownerAddress) {
       setWalletBalance(null);
       return;
@@ -191,14 +78,8 @@ function BalanceTransfer() {
 
     setIsLoadingBalance(true);
     try {
-      const balance = await publicClient.readContract({
-        address: SBC_TOKEN_ADDRESS(chain),
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [ownerAddress],
-      });
-      
-      setWalletBalance(balance.toString());
+      const balance = await fetchWalletBalance(ownerAddress);
+      setWalletBalance(balance);
     } catch (error) {
       setWalletBalance('0');
     } finally {
@@ -209,38 +90,30 @@ function BalanceTransfer() {
   useEffect(() => {
     if (ownerAddress) {
       checkNetwork();
-      fetchWalletBalance();
+      loadWalletBalance();
     }
-  }, [checkNetwork, fetchWalletBalance, ownerAddress]);
+  }, [checkNetwork, loadWalletBalance, ownerAddress]);
 
-  const formatSbcBalance = (balance) => {
-    if (!balance) return '0.0000';
-    try {
-      return (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
-    } catch {
-      return '0.0000';
-    }
-  };
 
   const handleTransfer = async () => {
     if (!account || !ownerAddress || !walletClient || !amount) return;
-    
+
     const isCorrectNetwork = await checkNetwork();
     if (!isCorrectNetwork) {
       setTransferStatus({ type: 'error', message: 'Please switch to Base network first' });
       return;
     }
-    
+
     try {
       setTransferStatus({ type: 'pending', message: 'Preparing transfer...' });
-      
+
       const ownerChecksum = getAddress(ownerAddress);
       const spenderChecksum = getAddress(account.address);
       const value = parseUnits(amount, SBC_DECIMALS(chain));
       const deadline = Math.floor(Date.now() / 1000) + 60 * 30;
-      
+
       setTransferStatus({ type: 'pending', message: 'Requesting signature...' });
-      
+
       const signature = await getPermitSignature({
         publicClient,
         walletClient,
@@ -258,21 +131,25 @@ function BalanceTransfer() {
       }
 
       setTransferStatus({ type: 'pending', message: 'Executing transfer...' });
-      
+
       const { r, s, v } = parseSignature(signature);
-      
-      const permitCallData = encodeFunctionData({
-        abi: permitAbi,
-        functionName: 'permit',
-        args: [ownerChecksum, spenderChecksum, value, deadline, v, r, s],
+
+      const permitCallData = createPermitCallData({
+        owner: ownerChecksum,
+        spender: spenderChecksum,
+        value,
+        deadline,
+        v,
+        r,
+        s,
       });
-      
-      const transferFromCallData = encodeFunctionData({
-        abi: erc20PermitAbi,
-        functionName: 'transferFrom',
-        args: [ownerChecksum, spenderChecksum, value],
+
+      const transferFromCallData = createTransferFromCallData({
+        from: ownerChecksum,
+        to: spenderChecksum,
+        value,
       });
-      
+
       await sendUserOperation({
         calls: [
           { to: SBC_TOKEN_ADDRESS(chain), data: permitCallData },
@@ -287,22 +164,17 @@ function BalanceTransfer() {
   const refreshSmartAccountBalance = useCallback(async () => {
     try {
       await refreshAccount?.();
-      
+
       if (account?.address) {
-        const balance = await publicClient.readContract({
-          address: SBC_TOKEN_ADDRESS(chain),
-          abi: erc20Abi,
-          functionName: 'balanceOf',
-          args: [account.address],
-        });
-        
-        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
-          detail: { 
-            balance: balance.toString(),
-            formattedBalance: (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4)
-          } 
+        const balance = await getSmartAccountBalance(account.address);
+
+        window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', {
+          detail: {
+            balance: balance,
+            formattedBalance: formatSbcBalance(balance)
+          }
         }));
-        
+
         window.dispatchEvent(new CustomEvent('smartAccountRefreshed'));
       }
     } catch (error) {
@@ -313,10 +185,10 @@ function BalanceTransfer() {
     if (isSuccess && data) {
       setTransferStatus({ type: 'success', hash: data.transactionHash });
       setAmount('');
-      fetchWalletBalance();
+      loadWalletBalance();
       refreshSmartAccountBalance();
     }
-  }, [isSuccess, data, fetchWalletBalance, refreshSmartAccountBalance]);
+  }, [isSuccess, data, loadWalletBalance, refreshSmartAccountBalance]);
 
   useEffect(() => {
     if (isError && opError) {
@@ -352,17 +224,17 @@ function BalanceTransfer() {
         <div className="status-header">
           <h3>Transfer SBC to Smart Account</h3>
         </div>
-        
+
         <div className="info-row">
           <label>Wallet Balance:</label>
           <div className="skeleton skeleton-text medium"></div>
         </div>
-        
+
         <div className="form-group">
           <label>Amount to Transfer</label>
           <div className="skeleton skeleton-input"></div>
         </div>
-        
+
         <div className="status-section">
           <div className="info-row">
             <label>From:</label>
@@ -388,7 +260,7 @@ function BalanceTransfer() {
       <div className="status-header">
         <h3>Transfer SBC to Smart Account</h3>
       </div>
-      
+
       {isWrongNetwork && (
         <div className="network-warning">
           <div className="warning-content">
@@ -400,7 +272,7 @@ function BalanceTransfer() {
           </div>
         </div>
       )}
-      
+
       <div className="info-row">
         <label>Wallet Balance:</label>
         <div className="value">
@@ -411,7 +283,7 @@ function BalanceTransfer() {
           )}
         </div>
       </div>
-      
+
       <div className="form-group">
         <label>Amount to Transfer</label>
         <input
@@ -430,7 +302,7 @@ function BalanceTransfer() {
           </span>
         )}
       </div>
-      
+
       <div className="status-section">
         <div className="info-row">
           <label>From:</label>
@@ -460,7 +332,7 @@ function BalanceTransfer() {
             <div className="status-content">
               <FaCheckCircle className="status-icon" />
               <p>Transfer Successful!</p>
-              <a 
+              <a
                 href={`https://basescan.org/tx/${transferStatus.hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -470,14 +342,14 @@ function BalanceTransfer() {
               </a>
             </div>
           )}
-          
+
           {transferStatus.type === 'error' && (
             <div className="status-content">
               <FaExclamationCircle className="status-icon" />
               <p>Transfer Failed</p>
             </div>
           )}
-          
+
           {transferStatus.type === 'pending' && (
             <div className="status-content">
               <FaSpinner className="status-icon spinning" />

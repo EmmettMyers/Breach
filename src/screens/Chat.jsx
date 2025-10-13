@@ -5,14 +5,9 @@ import { erc20Abi } from 'viem';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
 import { fetchModels, sendAgentMessage, fetchMessages } from '../utils/apiService';
+import { modelDisplayMap } from '../utils/modelUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/screens/Chat.css';
-
-const modelDisplayMap = {
-  'gpt-4': 'GPT-4',
-  'claude-3': 'Claude 3',
-  'gemini-2.5': 'Gemini 2.5'
-};
 
 const Chat = () => {
   const { modelId } = useParams();

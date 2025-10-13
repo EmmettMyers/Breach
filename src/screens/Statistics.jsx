@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useWalletState } from '../hooks/useWalletState';
 import { fetchUserStats, fetchModelStats } from '../utils/apiService';
+import { getModelDisplayName } from '../utils/modelUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorState from '../components/ErrorState';
 import NoDataState from '../components/NoDataState';
 import '../styles/screens/Statistics.css';
-
-const modelDisplayMap = {
-  'gpt-4': 'GPT-4',
-  'claude-3': 'Claude 3',
-  'gemini-2.5': 'Gemini 2.5'
-};
-
-const getModelDisplayName = (model) => {
-  return modelDisplayMap[model] || model;
-};
 
 const Statistics = () => {
   const { account } = useWalletState();

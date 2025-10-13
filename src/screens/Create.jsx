@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
 import { createModelAccount } from '../utils/apiService';
+import { aiModelOptions } from '../utils/modelUtils';
 import { FiAlertTriangle } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
@@ -27,11 +28,6 @@ const Create = () => {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const submitMessageTimeoutRef = useRef(null);
 
-  const aiModelOptions = [
-    'GPT-4',
-    'Claude 3',
-    'Gemini 2.5'
-  ];
 
   const fetchSbcBalance = async () => {
     if (!account?.address) return;
