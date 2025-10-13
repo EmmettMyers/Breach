@@ -61,7 +61,6 @@ function SmartAccountInfo() {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Fetch SBC balance for smart account
   useEffect(() => {
     if (!account?.address) return;
 
@@ -75,7 +74,6 @@ function SmartAccountInfo() {
           args: [account.address],
         });
         setSbcBalance(balance.toString());
-        // Dispatch custom event to notify Navigation component of balance update
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
             balance: balance.toString(),
@@ -84,9 +82,7 @@ function SmartAccountInfo() {
         }));
       } catch (error) {
         console.error('Failed to fetch SBC balance for smart account:', error);
-        // Set to 0 on error to prevent retry loops
         setSbcBalance('0');
-        // Dispatch event even on error to update navigation
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
             balance: '0',
@@ -98,20 +94,16 @@ function SmartAccountInfo() {
       }
     };
 
-    // Add a small delay to prevent immediate calls after account creation
     const timeout = setTimeout(fetchSbcBalance, 500);
     return () => clearTimeout(timeout);
   }, [account?.address]);
 
-  // Listen for smart account refresh events
   useEffect(() => {
     const handleSmartAccountRefresh = () => {
       console.log('Smart account refresh event received, updating UI...');
       setForceUpdate(prev => prev + 1);
-      // Also refresh the account data and balance
       if (account?.address) {
         refreshAccount?.();
-        // Re-fetch balance
         const fetchBalance = async () => {
           setIsLoadingBalance(true);
           try {
@@ -140,7 +132,6 @@ function SmartAccountInfo() {
     setIsRefreshing(true);
     try {
       await refreshAccount?.();
-      // Only refresh SBC balance if we have a valid account address
       if (account?.address) {
         setIsLoadingBalance(true);
         try {
@@ -151,7 +142,6 @@ function SmartAccountInfo() {
             args: [account.address],
           });
           setSbcBalance(balance.toString());
-          // Dispatch custom event to notify Navigation component of balance update
           window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
             detail: { 
               balance: balance.toString(),
@@ -160,7 +150,6 @@ function SmartAccountInfo() {
           }));
         } catch (error) {
           console.error('Failed to refresh SBC balance:', error);
-          // Don't set to 0 on error, keep previous value
         } finally {
           setIsLoadingBalance(false);
         }
@@ -269,9 +258,7 @@ function WalletConnectFlow({ onDisconnect }) {
   useEffect(() => {
     if (ownerAddress && !prevOwnerAddress.current) {
       console.log('New wallet connection detected:', ownerAddress);
-      // Only refresh once when wallet first connects
       refreshAccount();
-      // Dispatch custom event to notify Navigation component
       window.dispatchEvent(new CustomEvent('walletConnected', { 
         detail: { ownerAddress } 
       }));
@@ -279,7 +266,6 @@ function WalletConnectFlow({ onDisconnect }) {
     prevOwnerAddress.current = ownerAddress;
   }, [ownerAddress, refreshAccount]);
 
-  // Simple check: if no ownerAddress or global disconnect state is true, show connect prompt
   if (!ownerAddress || window.walletDisconnected) {
     return (
       <div className="connect-prompt">
@@ -323,60 +309,51 @@ const SignIn = () => {
   const [showWalletSelector, setShowWalletSelector] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Handle connection state changes - simplified
   useEffect(() => {
     if (ownerAddress && account) {
       setIsConnecting(false);
-      // Reset global disconnect state when wallet reconnects
       window.walletDisconnected = false;
     }
   }, [ownerAddress, account]);
 
-  // Refresh account data when component mounts or connection changes
   useEffect(() => {
     if (ownerAddress) {
-      // Wait a bit for the smart account to be initialized
       const timeout = setTimeout(() => {
         refreshAccount();
-      }, 1000); // 1 second delay
+      }, 1000);
       
       return () => clearTimeout(timeout);
     }
   }, [ownerAddress, refreshAccount]);
 
-  // Poll for account data if wallet is connected but no account data yet
-  // Reduced polling frequency and max attempts to prevent rate limiting
   useEffect(() => {
     if (ownerAddress && !account && !isLoadingAccount) {
       let pollCount = 0;
-      const maxPolls = 5; // Reduced from 10 to 5 attempts
+      const maxPolls = 5;
       
       const interval = setInterval(() => {
         pollCount++;
         refreshAccount();
         
-        // Stop polling after max attempts
         if (pollCount >= maxPolls) {
           clearInterval(interval);
         }
-      }, 5000); // Increased from 2 seconds to 5 seconds to reduce API calls
+      }, 5000);
       
       return () => clearInterval(interval);
     }
   }, [ownerAddress, account, isLoadingAccount, refreshAccount]);
 
-  // Reset connecting state after a timeout
   useEffect(() => {
     if (isConnecting) {
       const timeout = setTimeout(() => {
         setIsConnecting(false);
-      }, 10000); // 10 second timeout
+      }, 10000);
 
       return () => clearTimeout(timeout);
     }
   }, [isConnecting]);
 
-  // Listen for wallet connection events to reset disconnect state
   useEffect(() => {
     const handleWalletConnection = () => {
       console.log('Wallet connection event received, resetting disconnect state');
@@ -389,19 +366,16 @@ const SignIn = () => {
 
   const handleDisconnect = () => {
     console.log('Disconnect button clicked, dispatching events...');
-    // Set global state immediately
     window.walletDisconnected = true;
     disconnectWallet();
     setShowWalletSelector(false);
     setIsConnecting(false);
-    // Dispatch custom event to notify Navigation component
     window.dispatchEvent(new CustomEvent('walletDisconnected'));
   };
 
   const handleWalletConnect = useCallback(() => {
     setIsConnecting(true);
     setShowWalletSelector(false);
-    // Force a refresh after a short delay
     setTimeout(() => {
       refreshAccount();
     }, 2000);
@@ -410,7 +384,6 @@ const SignIn = () => {
   const handleWalletSelectorConnect = useCallback(() => {
     setIsConnecting(true);
     setShowWalletSelector(false);
-    // Force a refresh after a short delay
     setTimeout(() => {
       refreshAccount();
     }, 2000);

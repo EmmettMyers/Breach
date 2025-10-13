@@ -38,49 +38,39 @@ const Chat = () => {
   const transferStatusTimeoutRef = useRef(null);
   const currentMessageRef = useRef(null);
 
-  // Function to set transfer status with auto-dismiss
   const setTransferStatusWithTimeout = (status) => {
     setTransferStatus(status);
     
-    // Clear existing timeout
     if (transferStatusTimeoutRef.current) {
       clearTimeout(transferStatusTimeoutRef.current);
     }
     
-    // Set new timeout to fade out and clear status after 3 seconds
     transferStatusTimeoutRef.current = setTimeout(() => {
-      // Add fade-out class for smooth transition
       const statusElement = document.querySelector('.transfer-status');
       if (statusElement) {
         statusElement.classList.add('fade-out');
-        // Remove element after fade animation completes
         setTimeout(() => {
           setTransferStatus(null);
-        }, 150); // Match the CSS transition duration
+        }, 150);
       } else {
         setTransferStatus(null);
       }
     }, 3000);
   };
 
-  // SBC AppKit hooks
   const { account, ownerAddress, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
       console.log('SBC transfer successful:', result);
       setTransferStatusWithTimeout({ type: 'success', hash: result.transactionHash });
       
-      // Generate AI response after successful payment
       const generateAIResponse = async (userMessage) => {
         try {
-          // Use the message content passed to the function
           const messageContent = userMessage;
           
-          // Debug logging
           console.log('Debug - userMessage:', userMessage);
           console.log('Debug - messageContent:', messageContent);
           
-          // Validate required parameters
           if (!messageContent || !messageContent.trim()) {
             console.error('Message validation failed:', { messageContent, userMessage });
             throw new Error('Message cannot be empty');
@@ -90,12 +80,11 @@ const Chat = () => {
             throw new Error('Wallet not connected');
           }
           
-          // Call the actual agent API
           const response = await sendAgentMessage(
             messageContent,
-            model.model_address || model.id, // Use model_address if available, fallback to id
-            account.address, // Use wallet address as user_id
-            account.address // Use wallet address as smart address
+            model.model_address || model.id,
+            account.address,
+            account.address
           );
           
           const aiResponse = {
@@ -112,11 +101,9 @@ const Chat = () => {
           
           setMessages(prev => [...prev, aiResponse]);
           
-          // Show jailbreak success animation if tools were called
           if (response.called_tools && response.called_tools.length > 0) {
             setShowJailbreakSuccess(true);
             setIsModelJailbroken(true);
-            // Auto-hide animation after 3 seconds
             setTimeout(() => {
               setShowJailbreakSuccess(false);
             }, 3000);
@@ -124,7 +111,6 @@ const Chat = () => {
         } catch (error) {
           console.error('Failed to generate AI response:', error);
           
-          // Determine error type and create appropriate response
           let errorMessage = 'An unexpected error occurred';
           let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage}". Please try again.`;
           
@@ -142,7 +128,6 @@ const Chat = () => {
             aiResponseContent = `Please enter a message to continue.`;
           }
           
-          // Add a fallback response
           const fallbackResponse = {
             id: Date.now() + 1,
             type: 'ai',
@@ -151,7 +136,6 @@ const Chat = () => {
           };
           setMessages(prev => [...prev, fallbackResponse]);
           
-          // Show error message
           setTransferStatusWithTimeout({ 
             type: 'error', 
             message: `AI response failed: ${errorMessage}` 
@@ -163,7 +147,6 @@ const Chat = () => {
       
       generateAIResponse(currentMessageRef.current);
       
-      // Refresh SBC balance after successful transfer
       if (account?.address) {
         const refreshBalance = async () => {
           try {
@@ -175,7 +158,6 @@ const Chat = () => {
             });
             setSbcBalance(balance.toString());
             
-            // Dispatch event to update navigation pill
             const formattedBalance = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
             window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', {
               detail: {
@@ -195,9 +177,7 @@ const Chat = () => {
       setTransferStatusWithTimeout({ type: 'error', message: error.message });
       setIsLoading(false);
       
-      // Remove the user's message when payment is declined
       setMessages(prev => {
-        // Find the last user message and remove it
         const lastUserMessageIndex = prev.findLastIndex(msg => msg.type === 'user');
         if (lastUserMessageIndex !== -1) {
           return prev.filter((_, index) => index !== lastUserMessageIndex);
@@ -208,18 +188,15 @@ const Chat = () => {
   });
 
 
-  // Find the model by ID from API
   useEffect(() => {
     const loadModel = async () => {
       try {
-        // Fetch models from API
         const apiResponse = await fetchModels();
         const apiModels = Array.isArray(apiResponse) ? apiResponse :
           (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
             (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
 
         if (Array.isArray(apiModels) && apiModels.length > 0) {
-          // Map API data to match the expected structure
           const mappedModels = apiModels.map((model, index) => ({
             id: model.model_id || model._id || index + 1,
             title: model.model_name || 'Unnamed Model',
@@ -244,7 +221,6 @@ const Chat = () => {
           }
         }
 
-        // Model not found in API, redirect to explore
         navigate('/');
       } catch (error) {
         console.error('Failed to load model:', error);
@@ -255,19 +231,17 @@ const Chat = () => {
     loadModel();
   }, [modelId, navigate]);
 
-  // Load existing messages when model is loaded and user is connected
   useEffect(() => {
     const loadMessages = async () => {
       if (!model || !account?.address) return;
 
       try {
         const messagesResponse = await fetchMessages(
-          account.address, // Use wallet address as user_id
-          model.model_address || model.id // Use model_address if available, fallback to id
+          account.address,
+          model.model_address || model.id
         );
         
         if (messagesResponse && messagesResponse.messages && Array.isArray(messagesResponse.messages)) {
-          // Transform API messages to match the expected format
           const transformedMessages = messagesResponse.messages.map((msg, index) => ({
             id: msg.id || Date.now() + index,
             type: msg.type || (msg.role === 'user' ? 'user' : 'ai'),
@@ -281,7 +255,6 @@ const Chat = () => {
         }
       } catch (error) {
         console.error('Failed to load messages:', error);
-        // Don't show error to user, just start with empty messages
         setMessages([]);
       }
     };
@@ -289,7 +262,6 @@ const Chat = () => {
     loadMessages();
   }, [model, account?.address]);
 
-  // Manual scroll function
   const scrollToBottom = (smooth = true) => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
@@ -300,15 +272,12 @@ const Chat = () => {
     }
   };
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    // Small delay to ensure DOM is updated
     setTimeout(() => {
       scrollToBottom(true);
     }, 100);
   }, [messages]);
 
-  // Also scroll when loading state changes
   useEffect(() => {
     if (isLoading) {
       setTimeout(() => {
@@ -317,16 +286,14 @@ const Chat = () => {
     }
   }, [isLoading]);
 
-  // Handle scroll detection to show/hide scroll button
   const handleScroll = () => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50; // 50px threshold
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
       setShowScrollButton(!isAtBottom);
     }
   };
 
-  // Fetch SBC balance for smart account
   useEffect(() => {
     if (!account?.address) return;
 
@@ -351,7 +318,6 @@ const Chat = () => {
     fetchSbcBalance();
   }, [account?.address]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (transferStatusTimeoutRef.current) {
@@ -360,7 +326,6 @@ const Chat = () => {
     };
   }, []);
 
-  // Format SBC balance
   const formatSbcBalance = (balance) => {
     if (!balance) return '0.0000';
     try {
@@ -370,12 +335,10 @@ const Chat = () => {
     }
   };
 
-  // Check if current user owns the model
   const isModelOwner = () => {
-    return ownerAddress && model && model.user_id === ownerAddress; // Only show as owned if wallet is connected
+    return ownerAddress && model && model.user_id === ownerAddress;
   };
 
-  // Model management functions
   const handleDepositPrize = () => {
     if (!depositAmount || depositAmount <= 0) {
       setTransferStatusWithTimeout({ 
@@ -385,7 +348,6 @@ const Chat = () => {
       return;
     }
     
-    // Simulate deposit (in real app, this would make a blockchain transaction)
     setTransferStatusWithTimeout({ 
       type: 'success', 
       message: `Successfully deposited ${depositAmount} SBC to ${model.title}'s prize pool.` 
@@ -403,7 +365,6 @@ const Chat = () => {
       return;
     }
     
-    // Simulate withdrawal (in real app, this would make a blockchain transaction)
     setTransferStatusWithTimeout({ 
       type: 'success', 
       message: `Successfully withdrew ${withdrawAmountChat} SBC from ${model.title}'s prize pool.` 
@@ -431,18 +392,16 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setCurrentMessage(inputMessage); // Store the current message for the AI response
-    currentMessageRef.current = inputMessage; // Store in ref for onSuccess callback
+    setCurrentMessage(inputMessage);
+    currentMessageRef.current = inputMessage;
     setInputMessage('');
     setIsLoading(true);
     
-    // Reset textarea height
     const textarea = document.querySelector('.message-input');
     if (textarea) {
-      textarea.style.height = '44px'; // Reset to minimum height (accounting for padding)
+      textarea.style.height = '44px';
     }
 
-    // Automatically send SBC tokens from smart account to the specified wallet
     if (account) {
       try {
         setTransferStatusWithTimeout({ type: 'processing', message: 'Processing SBC payment from smart account...' });
@@ -451,7 +410,7 @@ const Chat = () => {
           account,
           sendUserOperation,
           recipientAddress: model.smart_address || '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
-          amount: model.promptCost.toString() // Send promptCost SBC per message
+          amount: model.promptCost.toString()
         });
       } catch (error) {
         console.error('Failed to send SBC transfer:', error);
@@ -473,20 +432,16 @@ const Chat = () => {
     setInputMessage(e.target.value);
     const textarea = e.target;
     
-    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
     
-    // Get the computed line height
     const computedStyle = window.getComputedStyle(textarea);
     const lineHeight = parseFloat(computedStyle.lineHeight) || 20;
     const maxLines = 8;
-    const padding = 24; // 12px top + 12px bottom padding
+    const padding = 24;
     const maxHeight = (lineHeight * maxLines) + padding;
     
-    // Get the scroll height (content height)
     const scrollHeight = textarea.scrollHeight;
     
-    // Set height to the minimum of scrollHeight and maxHeight
     const newHeight = Math.min(scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
   };
@@ -530,7 +485,6 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Model Management Navigation - Only show for model owners */}
       {isModelOwner() && (
         <div className="model-management-nav">
           <div className="nav-section">
@@ -571,7 +525,6 @@ const Chat = () => {
       )}
 
       <div className="chat-container">
-        {/* Jailbreak Success Animation Overlay */}
         {showJailbreakSuccess && (
           <div className="jailbreak-success-overlay">
             <div className="jailbreak-success-content">
@@ -602,7 +555,6 @@ const Chat = () => {
           )}
           <div ref={messagesEndRef} />
           
-          {/* Scroll to bottom button */}
           {showScrollButton && (
             <button 
               className="scroll-to-bottom-button"

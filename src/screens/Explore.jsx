@@ -151,12 +151,10 @@ const Explore = () => {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
 
-  // API data state
   const [models, setModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
   const [modelsError, setModelsError] = useState(null);
 
-  // Fetch models from API
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -164,7 +162,6 @@ const Explore = () => {
         setModelsError(null);
         const apiResponse = await fetchModels();
 
-        // Handle different response formats - check if it's an array or has a data property
         const apiModels = Array.isArray(apiResponse) ? apiResponse :
           (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
             (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
@@ -172,7 +169,6 @@ const Explore = () => {
         console.log('API Response:', apiResponse);
         console.log('Processed Models:', apiModels);
 
-        // Check if we have valid models data
         if (!Array.isArray(apiModels) || apiModels.length === 0) {
           console.warn('No models found in API response');
           setModelsError('No models found');
@@ -180,7 +176,6 @@ const Explore = () => {
           return;
         }
 
-        // Map API data to match the expected structure
         const mappedModels = apiModels.map((model, index) => ({
           id: model.model_id || model._id || index + 1,
           title: model.model_name || 'Unnamed Model',
@@ -207,20 +202,16 @@ const Explore = () => {
     loadModels();
   }, []);
 
-  // Get unique AI models for filter dropdown
   const uniqueModels = [...new Set(models.map(model => model.aiModel))];
 
-  // Check if current user owns a model
   const isModelOwner = (model) => {
-    return ownerAddress && model.user_id === ownerAddress; // Only show as owned if wallet is connected
+    return ownerAddress && model.user_id === ownerAddress;
   };
 
-  // Check if model is owned by user (for sorting purposes, regardless of wallet connection)
   const isModelOwnedByUser = (model) => {
     return model.user_id === ownerAddress;
   };
 
-  // Filter and sort logic
   const filteredAndSortedModels = useMemo(() => {
     let filtered = models.filter(model => {
       const matchesSearch = model.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -247,19 +238,15 @@ const Explore = () => {
       return matchesSearch && matchesModel && matchesPrize && matchesOwned && matchesJailbroken;
     });
 
-    // Sort the filtered results - show owned models first (only if wallet is connected)
     return filtered.sort((a, b) => {
-      // Only prioritize owned models if wallet is connected
       if (ownerAddress && account) {
         const aIsOwned = isModelOwnedByUser(a);
         const bIsOwned = isModelOwnedByUser(b);
 
-        // If one is owned and the other isn't, prioritize owned
         if (aIsOwned && !bIsOwned) return -1;
         if (!aIsOwned && bIsOwned) return 1;
       }
 
-      // If both are owned or both are not owned, use the original sorting
       switch (sortBy) {
         case 'title':
           return a.title.localeCompare(b.title);
@@ -282,8 +269,6 @@ const Explore = () => {
   }, [searchTerm, selectedModel, selectedPrizeRange, sortBy, ownedFilter, jailbrokenFilter, ownerAddress, account, models]);
 
   const handleModelClick = (modelId) => {
-    // Check if wallet is connected (ownerAddress) rather than just account
-    // Account may still be initializing even when wallet is connected
     if (!ownerAddress) {
       setPopup({
         isOpen: true,
@@ -294,7 +279,6 @@ const Explore = () => {
       return;
     }
 
-    // If wallet is connected but account is still loading, show a different message
     if (ownerAddress && !account && isLoadingAccount) {
       setPopup({
         isOpen: true,
@@ -317,7 +301,7 @@ const Explore = () => {
     setModelMenu({
       isOpen: true,
       modelId,
-      x: rect.right - 200, // Position menu to the left of the button
+      x: rect.right - 200,
       y: rect.bottom + 5
     });
   };
@@ -338,7 +322,6 @@ const Explore = () => {
       return;
     }
 
-    // Simulate deposit (in real app, this would make a blockchain transaction)
     setPopup({
       isOpen: true,
       title: 'Deposit Successful',
@@ -361,7 +344,6 @@ const Explore = () => {
       return;
     }
 
-    // Simulate withdrawal (in real app, this would make a blockchain transaction)
     setPopup({
       isOpen: true,
       title: 'Withdrawal Successful',
@@ -499,7 +481,6 @@ const Explore = () => {
         type={popup.type}
       />
 
-      {/* Model Management Menu */}
       {modelMenu.isOpen && (
         <div
           className="model-menu-overlay"

@@ -103,14 +103,12 @@
   color: var(--color-text-secondary);
 }
 
-/* Navigation right side */
 .nav-right {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-/* Primary Connect Wallet Pill */
 .connect-wallet-pill {
   display: inline-flex;
   align-items: center;
@@ -133,7 +131,6 @@
   background: var(--color-primary-hover);
 }
 
-/* Connect wallet pill on sign-in page - white border */
 .navigation.signin-page .connect-wallet-pill {
   border: 1px solid white;
 }
@@ -148,7 +145,6 @@
   transform: translateY(0);
 }
 
-/* Wallet Status Pill */
 .wallet-status-pill {
   display: flex;
   align-items: center;
@@ -167,7 +163,6 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Wallet Status Pill on sign-in page - primary border */
 .navigation.signin-page .wallet-status-pill {
   border: 1px solid var(--color-primary);
 }
@@ -203,7 +198,6 @@
   font-weight: 500;
 }
 
-/* Responsive design for wallet pill */
 @media (max-width: 768px) {
   .nav-right {
     gap: 0.5rem;

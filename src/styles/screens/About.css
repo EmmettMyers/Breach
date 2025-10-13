@@ -7,7 +7,6 @@
 }
 
 
-/* Section Styles */
 .about-section {
   margin-bottom: 2rem;
   background: rgba(255, 255, 255, 0.02);
@@ -73,7 +72,6 @@
   margin: 0 auto;
 }
 
-/* Workflow Grid */
 .workflow-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -144,7 +142,6 @@
   line-height: 1.6;
 }
 
-/* Features Section */
 .features-section {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 20px;
@@ -224,7 +221,6 @@
 }
 
 
-/* CTA Section */
 .cta-section {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.06) 100%);
   border-radius: 20px;
@@ -305,7 +301,6 @@
   transform: translateY(-2px);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .about-container {
     padding: 1rem 0.5rem;

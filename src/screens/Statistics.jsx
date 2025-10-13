@@ -6,14 +6,12 @@ import ErrorState from '../components/ErrorState';
 import NoDataState from '../components/NoDataState';
 import '../styles/screens/Statistics.css';
 
-// Model name to display string mapping
 const modelDisplayMap = {
   'gpt-4': 'GPT-4',
   'claude-3': 'Claude 3',
   'gemini-2.5': 'Gemini 2.5'
 };
 
-// Helper function to get display name for model
 const getModelDisplayName = (model) => {
   console.log('Model Name:', model);
   return modelDisplayMap[model] || model;
@@ -26,7 +24,6 @@ const Statistics = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch user stats function
   const fetchStats = async () => {
     if (!account?.address) {
       setIsLoading(false);
@@ -50,13 +47,11 @@ const Statistics = () => {
     }
   };
 
-  // Fetch user stats when component mounts or account changes
   useEffect(() => {
     fetchStats();
   }, [account?.address]);
 
 
-  // Show loading state
   if (isLoading || !account?.address) {
     return (
       <div className="statistics-screen">
@@ -67,7 +62,6 @@ const Statistics = () => {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="statistics-screen">
@@ -81,7 +75,6 @@ const Statistics = () => {
     );
   }
 
-  // Show no data state
   if (!userStats) {
     return (
       <div className="statistics-screen">
@@ -90,7 +83,7 @@ const Statistics = () => {
             title="No Statistics Available"
             message="You haven't made any attempts yet. Start jailbreaking some models!"
             actionText="Start Jailbreaking"
-            onAction={() => {/* Navigate to create page or trigger action */}}
+            onAction={() => {}}
           />
         </div>
       </div>
@@ -100,9 +93,7 @@ const Statistics = () => {
   return (
     <div className="statistics-screen">
       <div className="statistics-container">
-        {/* Statistics Container */}
         <div className="statistics-box">
-          {/* Row 1 - Activity Metrics */}
           <div className="metrics-grid">
             <div className="metric-card">
               <div className="metric-content">
@@ -135,7 +126,6 @@ const Statistics = () => {
             </div>
           </div>
 
-          {/* Row 2 - Financial Metrics */}
           <div className="performance-grid">
             <div className="performance-card">
               <div className="performance-content">
@@ -171,7 +161,6 @@ const Statistics = () => {
           </div>
         </div>
 
-        {/* Model Statistics Table */}
         {modelStats && Object.keys(modelStats).length > -1 && (
           <div className="model-stats-section">
             <div className="model-stats-table-container">

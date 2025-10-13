@@ -17,14 +17,11 @@ const Navigation = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isDisconnected, setIsDisconnected] = useState(false);
 
-  // Simplified wallet state logic - prioritize direct useSbcApp over wallet state hook
   const effectiveOwnerAddress = ownerAddress || walletStateOwnerAddress;
   const effectiveAccount = account || walletStateAccount;
   
-  // Force refresh when wallet connection changes
   useEffect(() => {
     if (effectiveOwnerAddress) {
-      // Force refresh to ensure pill shows up immediately
       const refreshTimer = setTimeout(() => {
         if (refreshAccount) refreshAccount();
         if (walletStateRefreshAccount) walletStateRefreshAccount();
@@ -35,22 +32,19 @@ const Navigation = () => {
     }
   }, [effectiveOwnerAddress, refreshAccount, walletStateRefreshAccount]);
   
-  // Simplified wallet connection check
   const isWalletConnected = !isDisconnected && 
     effectiveOwnerAddress && 
     effectiveOwnerAddress.length === 42 && 
     effectiveOwnerAddress.startsWith('0x') &&
     !window.walletDisconnected;
 
-  // Show pill only if wallet is connected and not explicitly disconnected
   const shouldShowPill = isWalletConnected;
 
-  // Listen for wallet connection events
   useEffect(() => {
     const handleWalletConnection = () => {
       console.log('Wallet connection detected, refreshing Navigation...');
       setIsDisconnected(false);
-      window.walletDisconnected = false; // Reset global state
+      window.walletDisconnected = false;
       setForceUpdate(prev => prev + 1);
       if (refreshAccount) refreshAccount();
       if (walletStateRefreshAccount) walletStateRefreshAccount();
@@ -63,14 +57,11 @@ const Navigation = () => {
       setIsLoadingBalance(false);
       setForceUpdate(prev => prev + 1);
       
-      // Clear all wallet state immediately
       window.walletDisconnected = true;
       
-      // Force refresh to clear all wallet state
       if (refreshAccount) refreshAccount();
       if (walletStateRefreshAccount) walletStateRefreshAccount();
       
-      // Multiple timeouts to ensure pill removal
       setTimeout(() => {
         console.log('Force removing pill after timeout...');
         setIsDisconnected(true);
@@ -96,13 +87,11 @@ const Navigation = () => {
       setSbcBalance(balance);
       setForceUpdate(prev => prev + 1);
       
-      // Force a re-render to ensure the pill updates immediately
       setTimeout(() => {
         setForceUpdate(prev => prev + 1);
       }, 100);
     };
 
-    // Listen for custom wallet connection events
     window.addEventListener('walletConnected', handleWalletConnection);
     window.addEventListener('walletDisconnected', handleWalletDisconnection);
     window.addEventListener('sbcBalanceUpdated', handleSbcBalanceUpdate);
@@ -114,10 +103,8 @@ const Navigation = () => {
     };
   }, [refreshAccount, walletStateRefreshAccount]);
 
-  // Cleanup effect when wallet disconnects
   useEffect(() => {
     if (!effectiveOwnerAddress && !ownerAddress && !walletStateOwnerAddress) {
-      // All wallet sources are empty, clear all state
       setIsDisconnected(true);
       setSbcBalance(null);
       setIsLoadingBalance(false);
@@ -125,7 +112,6 @@ const Navigation = () => {
     }
   }, [effectiveOwnerAddress, ownerAddress, walletStateOwnerAddress]);
 
-  // Force pill removal when disconnected
   useEffect(() => {
     if (isDisconnected) {
       console.log('Disconnected state detected, forcing pill removal...');
@@ -133,7 +119,6 @@ const Navigation = () => {
     }
   }, [isDisconnected]);
 
-  // Monitor global disconnect state
   useEffect(() => {
     const checkGlobalState = () => {
       if (window.walletDisconnected) {
@@ -143,10 +128,8 @@ const Navigation = () => {
       }
     };
     
-    // Check immediately
     checkGlobalState();
     
-    // Check periodically
     const interval = setInterval(checkGlobalState, 100);
     
     return () => clearInterval(interval);
@@ -159,12 +142,10 @@ const Navigation = () => {
     { path: '/about', name: 'About' }
   ];
 
-  // Handle wallet pill click to navigate to sign-in
   const handleWalletPillClick = () => {
     navigate('/signin');
   };
 
-  // Fetch SBC balance for smart account
   useEffect(() => {
     if (!effectiveAccount?.address) return;
 
@@ -189,12 +170,11 @@ const Navigation = () => {
     fetchSbcBalance();
   }, [effectiveAccount?.address]);
 
-  // Format SBC balance
   const formatSbcBalance = (balance) => {
     if (!balance) return '0.0000';
     try {
       const formatted = (Number(balance) / Math.pow(10, SBC_DECIMALS(chain))).toFixed(4);
-      return formatted; // Keep four decimal places
+      return formatted;
     } catch {
       return '0.0000';
     }

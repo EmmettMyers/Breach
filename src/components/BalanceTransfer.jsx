@@ -4,7 +4,6 @@ import { getAddress, parseSignature, parseUnits, encodeFunctionData, erc20Abi } 
 import { FaCheckCircle, FaExclamationCircle, FaSpinner } from 'react-icons/fa';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 
-// ERC-20 Permit ABI
 const erc20PermitAbi = [
   ...erc20Abi,
   {
@@ -56,7 +55,6 @@ const permitAbi = [
   }
 ];
 
-// Helper to get permit signature
 async function getPermitSignature({
   publicClient,
   walletClient,
@@ -68,18 +66,17 @@ async function getPermitSignature({
   deadline,
 }) {
   try {
-    // Get the token name and version from the contract
     const [tokenName, tokenVersion] = await Promise.all([
       publicClient.readContract({
         address: tokenAddress,
         abi: erc20PermitAbi,
         functionName: 'name',
-      }).catch(() => 'SBC'), // Fallback to 'SBC' if name() doesn't exist
+      }).catch(() => 'SBC'),
       publicClient.readContract({
         address: tokenAddress,
         abi: erc20PermitAbi,
         functionName: 'version',
-      }).catch(() => '1'), // Fallback to '1' if version() doesn't exist
+      }).catch(() => '1'),
     ]);
 
     const nonce = await publicClient.readContract({
@@ -148,7 +145,6 @@ function BalanceTransfer() {
 
   const walletClient = sbcAppKit?.walletClient;
 
-  // Check if wallet is on the correct network
   const checkNetwork = useCallback(async () => {
     if (!walletClient) return;
     
@@ -167,7 +163,6 @@ function BalanceTransfer() {
     }
   }, [walletClient]);
 
-  // Switch to Base network
   const switchToBaseNetwork = async () => {
     if (!walletClient) return;
     
@@ -176,7 +171,6 @@ function BalanceTransfer() {
       setIsWrongNetwork(false);
     } catch (error) {
       console.error('Error switching network:', error);
-      // If the network is not added, try to add it
       try {
         await walletClient.addChain({
           chain: {
@@ -201,7 +195,6 @@ function BalanceTransfer() {
     }
   };
 
-  // Fetch wallet (EOA) SBC balance
   const fetchWalletBalance = useCallback(async () => {
     if (!ownerAddress) {
       setWalletBalance(null);
@@ -226,7 +219,6 @@ function BalanceTransfer() {
     }
   }, [ownerAddress]);
 
-  // Check network and fetch balance when component mounts or ownerAddress changes
   useEffect(() => {
     if (ownerAddress) {
       checkNetwork();
@@ -246,7 +238,6 @@ function BalanceTransfer() {
   const handleTransfer = async () => {
     if (!account || !ownerAddress || !walletClient || !amount) return;
     
-    // Check network first
     const isCorrectNetwork = await checkNetwork();
     if (!isCorrectNetwork) {
       setTransferStatus({ type: 'error', message: 'Please switch to Base network first' });
@@ -259,7 +250,7 @@ function BalanceTransfer() {
       const ownerChecksum = getAddress(ownerAddress);
       const spenderChecksum = getAddress(account.address);
       const value = parseUnits(amount, SBC_DECIMALS(chain));
-      const deadline = Math.floor(Date.now() / 1000) + 60 * 30; // 30 min
+      const deadline = Math.floor(Date.now() / 1000) + 60 * 30;
       
       setTransferStatus({ type: 'pending', message: 'Requesting signature...' });
       
@@ -307,13 +298,10 @@ function BalanceTransfer() {
     }
   };
 
-  // Refresh smart account balance
   const refreshSmartAccountBalance = useCallback(async () => {
     try {
-      // First refresh the account data (same as refresh button)
       await refreshAccount?.();
       
-      // Then fetch and update the SBC balance
       if (account?.address) {
         const balance = await publicClient.readContract({
           address: SBC_TOKEN_ADDRESS(chain),
@@ -322,7 +310,6 @@ function BalanceTransfer() {
           args: [account.address],
         });
         
-        // Dispatch custom event to notify other components of balance update
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
             balance: balance.toString(),
@@ -330,7 +317,6 @@ function BalanceTransfer() {
           } 
         }));
         
-        // Dispatch custom event to trigger UI refresh in smart account components
         window.dispatchEvent(new CustomEvent('smartAccountRefreshed'));
       }
     } catch (error) {
@@ -338,35 +324,29 @@ function BalanceTransfer() {
     }
   }, [account?.address, refreshAccount]);
 
-  // Handle successful transfer
   useEffect(() => {
     if (isSuccess && data) {
       setTransferStatus({ type: 'success', hash: data.transactionHash });
       setAmount('');
-      // Refresh wallet balance
       fetchWalletBalance();
-      // Refresh smart account balance
       refreshSmartAccountBalance();
     }
   }, [isSuccess, data, fetchWalletBalance, refreshSmartAccountBalance]);
 
-  // Handle transfer error
   useEffect(() => {
     if (isError && opError) {
       setTransferStatus({ type: 'error', message: opError.message });
     }
   }, [isError, opError]);
 
-  // Hide transfer status after 5 seconds with fade out
   useEffect(() => {
     if (transferStatus && (transferStatus.type === 'success' || transferStatus.type === 'error')) {
       const fadeTimer = setTimeout(() => {
-        // Add fade-out class to trigger CSS transition
         const statusElement = document.querySelector('.balance-transfer-card .status-message');
         if (statusElement) {
           statusElement.classList.add('fade-out');
         }
-      }, 4500); // Start fade 0.5s before hiding
+      }, 4500);
 
       const hideTimer = setTimeout(() => {
         setTransferStatus(null);

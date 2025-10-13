@@ -248,7 +248,6 @@
   font-weight: 500;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .explore-screen {
     padding: 1rem;
@@ -298,7 +297,6 @@
   }
 }
 
-/* Loading spinner styles for Explore page */
 .explore-loading-spinner {
   grid-column: 1 / -1;
   display: flex;
@@ -308,7 +306,6 @@
   width: 100%;
 }
 
-/* Popup styles */
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -424,7 +421,6 @@
   transform: translateY(0);
 }
 
-/* Responsive popup */
 @media (max-width: 480px) {
   .popup-content {
     width: 95%;
@@ -447,7 +443,6 @@
   }
 }
 
-/* Model Menu Styles */
 .model-menu-button {
   background: none;
   border: none;
@@ -629,7 +624,6 @@
   transform: translateY(-1px);
 }
 
-/* Responsive model menu */
 @media (max-width: 480px) {
   .model-menu {
     width: 90vw;
@@ -642,7 +636,6 @@
   }
 }
 
-/* Zero State Styles */
 .zero-state {
   grid-column: 1 / -1;
   display: flex;
@@ -702,7 +695,6 @@
   transform: translateY(0);
 }
 
-/* Responsive zero state */
 @media (max-width: 768px) {
   .zero-state {
     padding: 3rem 1rem;
@@ -722,7 +714,6 @@
   }
 }
 
-/* Error state styles for Explore */
 .explore-error-state {
   grid-column: 1 / -1;
 }

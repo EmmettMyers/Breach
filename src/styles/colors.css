@@ -1,40 +1,32 @@
 :root {
-  /* Primary Colors */
   --color-primary: #646cff;
   --color-primary-hover: #535bf2;
   --color-primary-light: #747bff;
   
-  /* Background Colors */
   --color-background: #242424;
   --color-background-light: #ffffff;
   --color-background-darker: #1a1a1a;
   
-  /* Navigation Colors */
   --color-nav-background: #000000;
   --color-nav-text: #ffffff;
   --color-nav-hover: rgba(255, 255, 255, 0.1);
   --color-nav-active: var(--color-primary);
   
-  /* Text Colors */
   --color-text-primary: rgba(255, 255, 255, 0.87);
   --color-text-primary-light: #213547;
   
-  /* Button Colors */
   --color-button-background: var(--color-background-darker);
   --color-button-background-light: #f9f9f9;
   --color-button-border: transparent;
   --color-button-hover-border: var(--color-primary);
   
-  /* Link Colors */
   --color-link: var(--color-primary);
   --color-link-hover: var(--color-primary-hover);
   --color-link-hover-light: var(--color-primary-light);
   
-  /* Shadow Colors */
   --color-shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* Light mode overrides */
 @media (prefers-color-scheme: light) {
   :root {
     --color-background: var(--color-background-light);

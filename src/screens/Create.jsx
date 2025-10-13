@@ -27,14 +27,12 @@ const Create = () => {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const submitMessageTimeoutRef = useRef(null);
 
-  // Available AI models from the mock data
   const aiModelOptions = [
     'GPT-4',
     'Claude 3',
     'Gemini 2.5'
   ];
 
-  // Function to fetch SBC balance
   const fetchSbcBalance = async () => {
     if (!account?.address) return;
 
@@ -55,32 +53,26 @@ const Create = () => {
     }
   };
 
-  // Fetch balance when account changes
   useEffect(() => {
     if (account?.address) {
       fetchSbcBalance();
     }
   }, [account?.address]);
 
-  // Function to set submit message with auto-dismiss
   const setSubmitMessageWithTimeout = (message) => {
     setSubmitMessage(message);
 
-    // Clear existing timeout
     if (submitMessageTimeoutRef.current) {
       clearTimeout(submitMessageTimeoutRef.current);
     }
 
-    // Set new timeout to fade out and clear message after 3 seconds
     submitMessageTimeoutRef.current = setTimeout(() => {
-      // Add fade-out class for smooth transition
       const messageElement = document.querySelector('.submit-message');
       if (messageElement) {
         messageElement.classList.add('fade-out');
-        // Remove element after fade animation completes
         setTimeout(() => {
           setSubmitMessage('');
-        }, 150); // Match the CSS transition duration
+        }, 150);
       } else {
         setSubmitMessage('');
       }
@@ -102,7 +94,6 @@ const Create = () => {
     setSubmitMessage('');
 
     try {
-      // Check if user has sufficient SBC balance
       if (sbcBalance) {
         const requiredAmount = parseFloat(formData.jailbreakPrize);
         const currentBalance = parseFloat(sbcBalance) / Math.pow(10, SBC_DECIMALS(chain));
@@ -114,10 +105,8 @@ const Create = () => {
         }
       }
 
-      // First, create the model via API call
       setSubmitMessageWithTimeout('Creating model...');
 
-      // Prepare the data for the API call
       const payload = {
         model: formData.aiModel.toLowerCase().replace(/\s+/g, '-'),
         user_id: ownerAddress || '',
@@ -129,18 +118,16 @@ const Create = () => {
         model_description: formData.description
       };
 
-      // Call the API to create the model account
       const response = await createModelAccount(payload);
       console.log('Model created successfully:', response);
 
       setSubmitMessageWithTimeout('Model created successfully! Processing payment...');
 
-      // Now proceed with payment after successful model creation
       if (account) {
         await sendSBCTransfer({
           account,
           sendUserOperation,
-          recipientAddress: response.smart_account.address, // Use the smart account address from the API response
+          recipientAddress: response.smart_account.address,
           amount: formData.jailbreakPrize.toString()
         });
       } else {
@@ -154,15 +141,12 @@ const Create = () => {
     }
   };
 
-  // Handle successful payment
   useEffect(() => {
     if (isPaymentSuccess && isSubmitting) {
       setSubmitMessageWithTimeout('Payment successful! Your AI model is now available for jailbreaking.');
 
-      // Refresh SBC balance after successful payment
       fetchSbcBalance();
 
-      // Trigger navigation balance update
       const balanceUpdateEvent = new CustomEvent('sbcBalanceUpdated', {
         detail: {
           balance: sbcBalance,
@@ -171,7 +155,6 @@ const Create = () => {
       });
       window.dispatchEvent(balanceUpdateEvent);
 
-      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -186,7 +169,6 @@ const Create = () => {
     }
   }, [isPaymentSuccess, isSubmitting, sbcBalance]);
 
-  // Handle payment error
   useEffect(() => {
     if (paymentError && isSubmitting) {
       setSubmitMessageWithTimeout(`Payment failed: ${paymentError.message}. Model was created but payment failed. Please contact support.`);
@@ -194,7 +176,6 @@ const Create = () => {
     }
   }, [paymentError, isSubmitting]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (submitMessageTimeoutRef.current) {
@@ -203,9 +184,8 @@ const Create = () => {
     };
   }, []);
 
-  // Check if user has sufficient balance
   const hasSufficientBalance = () => {
-    if (!sbcBalance || isLoadingBalance) return true; // Allow submission if balance is loading
+    if (!sbcBalance || isLoadingBalance) return true;
     const requiredAmount = parseFloat(formData.jailbreakPrize);
     const currentBalance = parseFloat(sbcBalance) / Math.pow(10, SBC_DECIMALS(chain));
     return currentBalance >= requiredAmount;
@@ -218,7 +198,6 @@ const Create = () => {
   const isWalletConnected = ownerAddress && account;
   const canSubmit = isFormValid && isWalletConnected && !isSubmitting && !isPaymentLoading && hasSufficientBalance();
 
-  // Show loading state while smart account is initializing
   if (ownerAddress && !account && isLoadingAccount) {
     return (
       <div className="create-screen">

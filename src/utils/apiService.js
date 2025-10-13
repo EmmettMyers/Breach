@@ -1,4 +1,3 @@
-// API service for fetching user statistics
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const fetchUserStats = async (userId) => {
@@ -79,7 +78,6 @@ export const fetchModels = async () => {
     }
 
     const data = await response.json();
-    console.log('API Response from /models:', data);
     return data;
   } catch (error) {
     console.error('Failed to fetch models:', error);
@@ -98,7 +96,6 @@ export const fetchMessages = async (userId, modelAddress) => {
 
     if (!response.ok) {
       if (response.status === 404) {
-        // No messages found for this user and model - return empty array
         return { user_id: userId, model_address: modelAddress, messages: [] };
       }
       throw new Error(`HTTP error! status: ${response.status}`);

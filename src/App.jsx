@@ -10,12 +10,10 @@ import Create from './screens/Create';
 import SignIn from './screens/SignIn';
 import About from './screens/About';
 
-// SBC AppKit configuration
 const sbcConfig = {
   apiKey: import.meta.env.VITE_SBC_API_KEY || 'your-sbc-api-key-here',
   chain: base,
-  wallet: 'auto', // Automatically detect available wallets
-  //debug: true,
+  wallet: 'auto',
 };
 
 function App() {

@@ -15,13 +15,10 @@ const About = () => {
   };
 
   const handleCreateModel = () => {
-    // Check if wallet is connected
     if (!account || !ownerAddress) {
-      // Redirect to sign-in page if wallet is not connected
       navigate('/signin');
       window.scrollTo(0, 0);
     } else {
-      // Navigate to create page if wallet is connected
       navigate('/create');
       window.scrollTo(0, 0);
     }
@@ -30,7 +27,6 @@ const About = () => {
   return (
     <div className="about-container">
 
-      {/* Platform Overview */}
       <section className="about-section cta-section">
         <div className="section-content">
           <h2 className="section-title">
@@ -45,7 +41,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="about-section">
         <div className="section-content">
           <h2 className="section-title">How It Works</h2>
@@ -75,7 +70,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Key Features */}
       <section className="about-section features-section">
         <div className="section-content">
           <h2 className="section-title">Key Features</h2>
@@ -139,7 +133,6 @@ const About = () => {
       </section>
 
 
-      {/* Call to Action */}
       <section className="about-section cta-section">
         <div className="cta-content">
           <h2 className="cta-title">Ready to Get Started?</h2>
