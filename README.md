@@ -1,4 +1,4 @@
-# Breach - Hack Midwest 2025
+# Breach - Hack Midwest 2025 (Frontend)
 
 Live Demo: [https://breach-ai.web.app/](https://breach-ai.web.app/)
 
