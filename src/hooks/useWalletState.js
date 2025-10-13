@@ -18,10 +18,17 @@ export const useWalletState = () => {
 
     setIsLoadingWalletBalance(true);
     try {
-      const sbcTokenAddress = '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+      const sbcTokenAddress = import.meta.env.VITE_SBC_TOKEN_ADDRESS || '';
       
-      console.log('Fetching balance for account:', account.address);
-      console.log('SBC token address:', sbcTokenAddress);
+      if (!sbcTokenAddress) {
+        setWalletBalance({
+          formatted: '0',
+          symbol: 'SBC',
+          decimals: 18,
+          value: '0'
+        });
+        return;
+      }
       
       const publicClient = createPublicClient({
         chain: baseSepolia,
@@ -40,7 +47,6 @@ export const useWalletState = () => {
       
       const code = await publicClient.getBytecode({ address: sbcTokenAddress });
       if (!code || code === '0x') {
-        console.warn('No contract found at SBC token address:', sbcTokenAddress);
         setWalletBalance({
           formatted: '0',
           symbol: 'SBC',
@@ -57,11 +63,9 @@ export const useWalletState = () => {
         args: [account.address]
       });
       
-      console.log('Raw balance response:', balance);
       
       if (balance !== undefined && balance !== null) {
         const formattedBalance = formatUnits(balance, 18);
-        console.log('Formatted balance:', formattedBalance);
         
         setWalletBalance({
           formatted: formattedBalance,
@@ -70,7 +74,6 @@ export const useWalletState = () => {
           value: balance.toString()
         });
       } else {
-        console.log('No SBC balance found in smart account');
         setWalletBalance({
           formatted: '0',
           symbol: 'SBC',
@@ -79,10 +82,8 @@ export const useWalletState = () => {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
       
       try {
-        console.log('Attempting fallback balance fetch...');
         setWalletBalance({
           formatted: '0',
           symbol: 'SBC',
@@ -90,7 +91,6 @@ export const useWalletState = () => {
           value: '0'
         });
       } catch (fallbackError) {
-        console.error('Fallback balance fetch also failed:', fallbackError);
         setWalletBalance({
           formatted: '0',
           symbol: 'SBC',
@@ -119,7 +119,6 @@ export const useWalletState = () => {
       await refreshAccount();
       setForceUpdate(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to refresh account:', error);
     } finally {
       setIsRefreshing(false);
     }

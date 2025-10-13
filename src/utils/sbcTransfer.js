@@ -5,11 +5,15 @@ import { chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 export async function sendSBCTransfer({
   account,
   sendUserOperation,
-  recipientAddress = '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
+  recipientAddress = import.meta.env.VITE_DEFAULT_RECIPIENT_ADDRESS || '',
   amount
 }) {
   if (!account) {
     throw new Error('Missing smart account for SBC transfer');
+  }
+  
+  if (!recipientAddress) {
+    throw new Error('Recipient address not configured. Please set VITE_DEFAULT_RECIPIENT_ADDRESS environment variable.');
   }
   
   try {
@@ -30,7 +34,6 @@ export async function sendSBCTransfer({
 
     return result;
   } catch (err) {
-    console.error('SBC transfer failed:', err);
     throw err;
   }
 }

@@ -13,7 +13,6 @@ const modelDisplayMap = {
 };
 
 const getModelDisplayName = (model) => {
-  console.log('Model Name:', model);
   return modelDisplayMap[model] || model;
 };
 
@@ -40,7 +39,6 @@ const Statistics = () => {
       setUserStats(stats);
       setModelStats(modelData);
     } catch (err) {
-      console.error('Failed to fetch statistics:', err);
       setError('Failed to load statistics. Please try again.');
     } finally {
       setIsLoading(false);

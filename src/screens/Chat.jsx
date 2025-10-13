@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSbcApp, useUserOperation, WalletButton } from '@stablecoin.xyz/react';
-import { parseUnits, createPublicClient, http, encodeFunctionData } from 'viem';
-import { base } from 'viem/chains';
+import { useSbcApp, useUserOperation } from '@stablecoin.xyz/react';
 import { erc20Abi } from 'viem';
 import { publicClient, chain, SBC_TOKEN_ADDRESS, SBC_DECIMALS } from '../config/rpc';
 import { sendSBCTransfer } from '../utils/sbcTransfer';
@@ -22,12 +20,10 @@ const Chat = () => {
   const [model, setModel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [transferStatus, setTransferStatus] = useState(null);
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [showModelMenu, setShowModelMenu] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmountChat, setWithdrawAmountChat] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -61,18 +57,13 @@ const Chat = () => {
   const { account, ownerAddress, isLoadingAccount } = useSbcApp();
   const { sendUserOperation, isLoading: isTransferLoading, isSuccess: isTransferSuccess, error: transferError } = useUserOperation({
     onSuccess: (result) => {
-      console.log('SBC transfer successful:', result);
       setTransferStatusWithTimeout({ type: 'success', hash: result.transactionHash });
       
       const generateAIResponse = async (userMessage) => {
         try {
           const messageContent = userMessage;
           
-          console.log('Debug - userMessage:', userMessage);
-          console.log('Debug - messageContent:', messageContent);
-          
           if (!messageContent || !messageContent.trim()) {
-            console.error('Message validation failed:', { messageContent, userMessage });
             throw new Error('Message cannot be empty');
           }
           
@@ -96,9 +87,6 @@ const Chat = () => {
             model: response.model || model.title
           };
 
-          console.log('Debug - aiResponse:', aiResponse);
-          console.log('Debug - jailbreak:', response.called_tools && response.called_tools.length > 0);
-          
           setMessages(prev => [...prev, aiResponse]);
           
           if (response.called_tools && response.called_tools.length > 0) {
@@ -109,7 +97,6 @@ const Chat = () => {
             }, 3000);
           }
         } catch (error) {
-          console.error('Failed to generate AI response:', error);
           
           let errorMessage = 'An unexpected error occurred';
           let aiResponseContent = `Sorry, I encountered an error processing your message: "${userMessage}". Please try again.`;
@@ -166,14 +153,12 @@ const Chat = () => {
               }
             }));
           } catch (error) {
-            console.error('Failed to refresh SBC balance:', error);
           }
         };
         refreshBalance();
       }
     },
     onError: (error) => {
-      console.error('SBC transfer failed:', error);
       setTransferStatusWithTimeout({ type: 'error', message: error.message });
       setIsLoading(false);
       
@@ -223,7 +208,6 @@ const Chat = () => {
 
         navigate('/');
       } catch (error) {
-        console.error('Failed to load model:', error);
         navigate('/');
       }
     };
@@ -254,7 +238,6 @@ const Chat = () => {
           setMessages(transformedMessages);
         }
       } catch (error) {
-        console.error('Failed to load messages:', error);
         setMessages([]);
       }
     };
@@ -308,7 +291,6 @@ const Chat = () => {
         });
         setSbcBalance(balance.toString());
       } catch (error) {
-        console.error('Failed to fetch SBC balance for smart account:', error);
         setSbcBalance('0');
       } finally {
         setIsLoadingBalance(false);
@@ -353,7 +335,6 @@ const Chat = () => {
       message: `Successfully deposited ${depositAmount} SBC to ${model.title}'s prize pool.` 
     });
     setDepositAmount('');
-    setShowModelMenu(false);
   };
 
   const handleWithdrawPrize = () => {
@@ -370,7 +351,6 @@ const Chat = () => {
       message: `Successfully withdrew ${withdrawAmountChat} SBC from ${model.title}'s prize pool.` 
     });
     setWithdrawAmountChat('');
-    setShowModelMenu(false);
   };
 
   const handleDeleteModel = () => {
@@ -378,7 +358,6 @@ const Chat = () => {
       type: 'error', 
       message: `Are you sure you want to delete "${model.title}"? This action cannot be undone.` 
     });
-    setShowModelMenu(false);
   };
 
   const handleSendMessage = async () => {
@@ -392,7 +371,6 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setCurrentMessage(inputMessage);
     currentMessageRef.current = inputMessage;
     setInputMessage('');
     setIsLoading(true);
@@ -409,11 +387,10 @@ const Chat = () => {
         await sendSBCTransfer({
           account,
           sendUserOperation,
-          recipientAddress: model.smart_address || '0x1b2A56827892ccB83AA2679075aF1bf6E1c3B7C0',
+          recipientAddress: model.smart_address || import.meta.env.VITE_DEFAULT_RECIPIENT_ADDRESS || '',
           amount: model.promptCost.toString()
         });
       } catch (error) {
-        console.error('Failed to send SBC transfer:', error);
         setTransferStatusWithTimeout({ type: 'error', message: `SBC transfer failed: ${error.message}` });
         setIsLoading(false);
         return;

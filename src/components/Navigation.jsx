@@ -14,7 +14,6 @@ const Navigation = () => {
   const { ownerAddress: walletStateOwnerAddress, account: walletStateAccount, refreshAccount: walletStateRefreshAccount } = useWalletState();
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
   const [isDisconnected, setIsDisconnected] = useState(false);
 
   const effectiveOwnerAddress = ownerAddress || walletStateOwnerAddress;
@@ -25,7 +24,6 @@ const Navigation = () => {
       const refreshTimer = setTimeout(() => {
         if (refreshAccount) refreshAccount();
         if (walletStateRefreshAccount) walletStateRefreshAccount();
-        setForceUpdate(prev => prev + 1);
       }, 500);
       
       return () => clearTimeout(refreshTimer);
@@ -42,20 +40,16 @@ const Navigation = () => {
 
   useEffect(() => {
     const handleWalletConnection = () => {
-      console.log('Wallet connection detected, refreshing Navigation...');
       setIsDisconnected(false);
       window.walletDisconnected = false;
-      setForceUpdate(prev => prev + 1);
       if (refreshAccount) refreshAccount();
       if (walletStateRefreshAccount) walletStateRefreshAccount();
     };
 
     const handleWalletDisconnection = () => {
-      console.log('Wallet disconnection detected, clearing Navigation state...');
       setIsDisconnected(true);
       setSbcBalance(null);
       setIsLoadingBalance(false);
-      setForceUpdate(prev => prev + 1);
       
       window.walletDisconnected = true;
       
@@ -63,32 +57,23 @@ const Navigation = () => {
       if (walletStateRefreshAccount) walletStateRefreshAccount();
       
       setTimeout(() => {
-        console.log('Force removing pill after timeout...');
         setIsDisconnected(true);
-        setForceUpdate(prev => prev + 1);
       }, 50);
       
       setTimeout(() => {
-        console.log('Second timeout for pill removal...');
         setIsDisconnected(true);
-        setForceUpdate(prev => prev + 1);
       }, 100);
       
       setTimeout(() => {
-        console.log('Third timeout for pill removal...');
         setIsDisconnected(true);
-        setForceUpdate(prev => prev + 1);
       }, 200);
     };
 
     const handleSbcBalanceUpdate = (event) => {
-      console.log('SBC balance update received in Navigation:', event.detail);
       const { balance, formattedBalance } = event.detail;
       setSbcBalance(balance);
-      setForceUpdate(prev => prev + 1);
       
       setTimeout(() => {
-        setForceUpdate(prev => prev + 1);
       }, 100);
     };
 
@@ -108,23 +93,18 @@ const Navigation = () => {
       setIsDisconnected(true);
       setSbcBalance(null);
       setIsLoadingBalance(false);
-      setForceUpdate(prev => prev + 1);
     }
   }, [effectiveOwnerAddress, ownerAddress, walletStateOwnerAddress]);
 
   useEffect(() => {
     if (isDisconnected) {
-      console.log('Disconnected state detected, forcing pill removal...');
-      setForceUpdate(prev => prev + 1);
     }
   }, [isDisconnected]);
 
   useEffect(() => {
     const checkGlobalState = () => {
       if (window.walletDisconnected) {
-        console.log('Global disconnect state detected, forcing pill removal...');
         setIsDisconnected(true);
-        setForceUpdate(prev => prev + 1);
       }
     };
     
@@ -160,7 +140,6 @@ const Navigation = () => {
         });
         setSbcBalance(balance.toString());
       } catch (error) {
-        console.error('Failed to fetch SBC balance for smart account:', error);
         setSbcBalance('0');
       } finally {
         setIsLoadingBalance(false);

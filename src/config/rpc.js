@@ -2,12 +2,16 @@ import { createPublicClient, http, fallback } from 'viem';
 import { base } from 'viem/chains';
 
 const baseRpcUrls = [
-    'https://mainnet.base.org',
-    'https://base-mainnet.g.alchemy.com/v2/demo',
-    'https://base-mainnet.public.blastapi.io',
-];
+    import.meta.env.VITE_BASE_RPC_URL_1 || '',
+    import.meta.env.VITE_BASE_RPC_URL_2 || '',
+    import.meta.env.VITE_BASE_RPC_URL_3 || '',
+].filter(url => url);
 
 const createBaseTransport = () => {
+    if (baseRpcUrls.length === 0) {
+        throw new Error('No RPC URLs configured. Please set VITE_BASE_RPC_URL_1, VITE_BASE_RPC_URL_2, and/or VITE_BASE_RPC_URL_3 environment variables.');
+    }
+    
     const transports = baseRpcUrls.map(url =>
         http(url, {
             timeout: 10000,
@@ -28,7 +32,11 @@ export const chain = base;
 
 export const SBC_TOKEN_ADDRESS = (chain) => {
     if (chain.id === base.id) {
-        return '0xfdcC3dd6671eaB0709A4C0f3F53De9a333d80798';
+        const address = import.meta.env.VITE_SBC_TOKEN_ADDRESS || '';
+        if (!address) {
+            throw new Error('SBC token address not configured. Please set VITE_SBC_TOKEN_ADDRESS environment variable.');
+        }
+        return address;
     }
     throw new Error('Unsupported chain');
 };

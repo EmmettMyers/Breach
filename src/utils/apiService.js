@@ -16,7 +16,6 @@ export const fetchUserStats = async (userId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to fetch user stats:', error);
     throw error;
   }
 };
@@ -37,7 +36,6 @@ export const fetchModelStats = async (userId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to fetch model stats:', error);
     throw error;
   }
 };
@@ -59,7 +57,6 @@ export const createModelAccount = async (payload) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to create model account:', error);
     throw error;
   }
 };
@@ -80,7 +77,6 @@ export const fetchModels = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to fetch models:', error);
     throw error;
   }
 };
@@ -104,7 +100,6 @@ export const fetchMessages = async (userId, modelAddress) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to fetch messages:', error);
     throw error;
   }
 };
@@ -131,7 +126,6 @@ export const sendAgentMessage = async (message, modelAddress, userId, userSmartA
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Failed to send agent message:', error);
     throw error;
   }
 };

@@ -46,7 +46,6 @@ const Create = () => {
       });
       setSbcBalance(balance.toString());
     } catch (error) {
-      console.error('Failed to fetch SBC balance:', error);
       setSbcBalance('0');
     } finally {
       setIsLoadingBalance(false);
@@ -119,7 +118,6 @@ const Create = () => {
       };
 
       const response = await createModelAccount(payload);
-      console.log('Model created successfully:', response);
 
       setSubmitMessageWithTimeout('Model created successfully! Processing payment...');
 
@@ -134,7 +132,6 @@ const Create = () => {
         throw new Error('Smart account not available for payment');
       }
     } catch (error) {
-      console.error('Model creation or payment failed:', error);
       setSubmitMessageWithTimeout(`Error: ${error.message}. Please try again.`);
       setIsSubmitting(false);
       return;

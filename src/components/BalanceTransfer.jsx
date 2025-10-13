@@ -111,14 +111,6 @@ async function getPermitSignature({
       deadline: deadline.toString(),
     };
 
-    console.log('Permit signature data:', {
-      domain,
-      types,
-      message,
-      tokenName,
-      tokenVersion,
-      nonce: nonce.toString(),
-    });
 
     const signature = await walletClient.signTypedData({
       domain,
@@ -129,7 +121,6 @@ async function getPermitSignature({
 
     return signature;
   } catch (error) {
-    console.error('Error getting permit signature:', error);
     return null;
   }
 }
@@ -158,7 +149,6 @@ function BalanceTransfer() {
         return true;
       }
     } catch (error) {
-      console.error('Error checking network:', error);
       return false;
     }
   }, [walletClient]);
@@ -170,7 +160,6 @@ function BalanceTransfer() {
       await walletClient.switchChain({ id: chain.id });
       setIsWrongNetwork(false);
     } catch (error) {
-      console.error('Error switching network:', error);
       try {
         await walletClient.addChain({
           chain: {
@@ -189,7 +178,6 @@ function BalanceTransfer() {
         await walletClient.switchChain({ id: chain.id });
         setIsWrongNetwork(false);
       } catch (addError) {
-        console.error('Error adding network:', addError);
         setTransferStatus({ type: 'error', message: 'Please switch to Base network manually in your wallet' });
       }
     }
@@ -212,7 +200,6 @@ function BalanceTransfer() {
       
       setWalletBalance(balance.toString());
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
       setWalletBalance('0');
     } finally {
       setIsLoadingBalance(false);
@@ -293,7 +280,6 @@ function BalanceTransfer() {
         ],
       });
     } catch (err) {
-      console.error('Transfer failed:', err);
       setTransferStatus({ type: 'error', message: err.message || 'Transfer failed' });
     }
   };
@@ -320,7 +306,6 @@ function BalanceTransfer() {
         window.dispatchEvent(new CustomEvent('smartAccountRefreshed'));
       }
     } catch (error) {
-      console.error('Failed to refresh smart account balance:', error);
     }
   }, [account?.address, refreshAccount]);
 

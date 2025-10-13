@@ -166,11 +166,8 @@ const Explore = () => {
           (apiResponse.data && Array.isArray(apiResponse.data)) ? apiResponse.data :
             (apiResponse.models && Array.isArray(apiResponse.models)) ? apiResponse.models : [];
 
-        console.log('API Response:', apiResponse);
-        console.log('Processed Models:', apiModels);
 
         if (!Array.isArray(apiModels) || apiModels.length === 0) {
-          console.warn('No models found in API response');
           setModelsError('No models found');
           setModels([]);
           return;
@@ -191,7 +188,6 @@ const Explore = () => {
 
         setModels(mappedModels);
       } catch (error) {
-        console.error('Failed to load models:', error);
         setModelsError('Failed to load models');
         setModels([]);
       } finally {

@@ -59,7 +59,6 @@ function SmartAccountInfo() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [sbcBalance, setSbcBalance] = useState(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
 
   useEffect(() => {
     if (!account?.address) return;
@@ -81,7 +80,6 @@ function SmartAccountInfo() {
           } 
         }));
       } catch (error) {
-        console.error('Failed to fetch SBC balance for smart account:', error);
         setSbcBalance('0');
         window.dispatchEvent(new CustomEvent('sbcBalanceUpdated', { 
           detail: { 
@@ -100,8 +98,6 @@ function SmartAccountInfo() {
 
   useEffect(() => {
     const handleSmartAccountRefresh = () => {
-      console.log('Smart account refresh event received, updating UI...');
-      setForceUpdate(prev => prev + 1);
       if (account?.address) {
         refreshAccount?.();
         const fetchBalance = async () => {
@@ -115,7 +111,6 @@ function SmartAccountInfo() {
             });
             setSbcBalance(balance.toString());
           } catch (error) {
-            console.error('Failed to refresh SBC balance:', error);
           } finally {
             setIsLoadingBalance(false);
           }
@@ -149,13 +144,11 @@ function SmartAccountInfo() {
             } 
           }));
         } catch (error) {
-          console.error('Failed to refresh SBC balance:', error);
         } finally {
           setIsLoadingBalance(false);
         }
       }
     } catch (error) {
-      console.error('Failed to refresh account:', error);
     } finally {
       setIsRefreshing(false);
     }
@@ -257,7 +250,6 @@ function WalletConnectFlow({ onDisconnect }) {
 
   useEffect(() => {
     if (ownerAddress && !prevOwnerAddress.current) {
-      console.log('New wallet connection detected:', ownerAddress);
       refreshAccount();
       window.dispatchEvent(new CustomEvent('walletConnected', { 
         detail: { ownerAddress } 
@@ -304,9 +296,7 @@ function WalletConnectFlow({ onDisconnect }) {
 }
 
 const SignIn = () => {
-  const navigate = useNavigate();
   const { account, ownerAddress, isLoadingAccount, refreshAccount, disconnectWallet } = useSbcApp();
-  const [showWalletSelector, setShowWalletSelector] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
@@ -356,7 +346,6 @@ const SignIn = () => {
 
   useEffect(() => {
     const handleWalletConnection = () => {
-      console.log('Wallet connection event received, resetting disconnect state');
       window.walletDisconnected = false;
     };
 
@@ -365,17 +354,14 @@ const SignIn = () => {
   }, []);
 
   const handleDisconnect = () => {
-    console.log('Disconnect button clicked, dispatching events...');
     window.walletDisconnected = true;
     disconnectWallet();
-    setShowWalletSelector(false);
     setIsConnecting(false);
     window.dispatchEvent(new CustomEvent('walletDisconnected'));
   };
 
   const handleWalletConnect = useCallback(() => {
     setIsConnecting(true);
-    setShowWalletSelector(false);
     setTimeout(() => {
       refreshAccount();
     }, 2000);
@@ -383,7 +369,6 @@ const SignIn = () => {
 
   const handleWalletSelectorConnect = useCallback(() => {
     setIsConnecting(true);
-    setShowWalletSelector(false);
     setTimeout(() => {
       refreshAccount();
     }, 2000);
