@@ -8,3 +8,5 @@ Live Demo: [https://breach-ai.web.app/](https://breach-ai.web.app/)
 Breach is a platform that connects AI model creators with security testers to identify vulnerabilities through controlled jailbreaking attempts, with economic incentives powered by stablecoins.<br/>
 
 This is the frontend repository, the backend repository is located [here](https://github.com/j-seibel/breach-backend).
+
+<strong>*UPDATE:*</strong> The project placed <strong>1st</strong> in the Brale API Challenge and Best Collegiate Team tracks!
