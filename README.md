@@ -5,8 +5,7 @@
 <img src="public/breach-example-1.png" style="width: 700px" />
 <img src="public/breach-example-2.png" style="width: 700px" />
 
-<br/>
-Breach is a platform that connects AI model creators with security testers to identify vulnerabilities through controlled jailbreaking attempts, with economic incentives powered by stablecoins.<br/><br/>
+Breach is a platform that connects AI model creators with security testers to identify vulnerabilities through controlled jailbreaking attempts, with economic incentives powered by stablecoins.<br/>
 
 Core Features:
  - <strong>Model Exploration & Discovery</strong> - Browse, search, filter, and sort AI models by type, prize range, ownership status, and jailbreak status.
