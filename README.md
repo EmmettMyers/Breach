@@ -3,7 +3,6 @@
 [Live Demo](https://breach-ai.web.app/)&nbsp;&nbsp;|&nbsp;&nbsp;<i>Created: Fall 2025 (College Senior)</i>
 
 <img src="public/breach-example-1.png" style="width: 700px" />
-<img src="public/breach-example-2.png" style="width: 700px" />
 
 Breach is a platform that connects AI model creators with security testers to identify vulnerabilities through controlled jailbreaking attempts, with economic incentives powered by stablecoins.<br/>
 
